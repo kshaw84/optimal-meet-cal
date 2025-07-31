@@ -5,6 +5,29 @@ import React from "react";
 
 import classNames from "@calcom/ui/classNames";
 
+// React 19 compatibility wrapper
+const React19CompatibleTrigger = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
+>((props, ref) => {
+  // Suppress React 19 deprecation warning for element.ref
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    if (args[0]?.includes?.("Accessing element.ref was removed in React 19")) {
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  try {
+    return <TooltipPrimitive.Trigger ref={ref} {...props} />;
+  } finally {
+    console.error = originalConsoleError;
+  }
+});
+
+React19CompatibleTrigger.displayName = "React19CompatibleTrigger";
+
 export function Tooltip({
   children,
   content,
@@ -45,7 +68,7 @@ export function Tooltip({
       open={open}
       defaultOpen={defaultOpen}
       onOpenChange={onOpenChange}>
-      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
+      <React19CompatibleTrigger asChild>{children}</React19CompatibleTrigger>
       <TooltipPrimitive.Portal>{Content}</TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>
   );
