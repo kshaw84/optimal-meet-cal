@@ -8,7 +8,25 @@ import { excludePendingPaymentsExtension } from "./extensions/exclude-pending-pa
 import { usageTrackingExtention } from "./extensions/usage-tracking";
 import { bookingReferenceMiddleware } from "./middleware";
 
+// Configure SSL settings for database connections
+const datasourceUrl = process.env.DATABASE_URL;
 const prismaOptions: Prisma.PrismaClientOptions = {};
+
+// Add SSL configuration if PGSSLMODE is set to no-verify
+if (process.env.PGSSLMODE === "no-verify" && datasourceUrl) {
+  // Parse the URL and add SSL parameters
+  const url = new URL(datasourceUrl);
+  url.searchParams.set("sslmode", "require");
+  url.searchParams.set("sslcert", "");
+  url.searchParams.set("sslkey", "");
+  url.searchParams.set("sslrootcert", "");
+
+  prismaOptions.datasources = {
+    db: {
+      url: url.toString(),
+    },
+  };
+}
 
 const globalForPrisma = global as unknown as {
   prismaWithoutClientExtensions: PrismaClientWithoutExtension;
