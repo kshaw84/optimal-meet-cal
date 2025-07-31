@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf .turbo && rm -rf node_modules",
-    "build": "ts-node --transpile-only ./auto-migrations.ts",
+    "build": "SKIP_DB_MIGRATIONS=1 ts-node --transpile-only ./auto-migrations.ts",
     "db-deploy": "yarn prisma migrate deploy",
     "db-migrate": "yarn prisma migrate dev",
     "db-nuke": "docker compose down --volumes --remove-orphans || docker-compose down --volumes --remove-orphans",
@@ -27,7 +27,6 @@
   "dependencies": {
     "@calcom/lib": "*",
     "@prisma/client": "^5.4.2",
-    "@prisma/extension-accelerate": "^0.6.2",
     "@prisma/generator-helper": "^5.4.2",
     "prisma": "^5.4.2",
     "prisma-kysely": "^1.7.1",

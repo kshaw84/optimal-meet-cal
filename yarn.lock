@@ -3640,7 +3640,6 @@ __metadata:
     "@calcom/lib": "*"
     "@faker-js/faker": 9.2.0
     "@prisma/client": ^5.4.2
-    "@prisma/extension-accelerate": ^0.6.2
     "@prisma/generator-helper": ^5.4.2
     npm-run-all: ^4.1.5
     prisma: ^5.4.2
@@ -11280,15 +11279,6 @@ __metadata:
   version: 5.4.2
   resolution: "@prisma/engines@npm:5.4.2"
   checksum: 90bec53c85e800291a3cf9f02f4979bd8177225077178fb292ea100b47af0e6d5c9a31bf3630f1dcfd23829299fe7685e386fc57a3d7ff3bf0c25c3704ce971f
-  languageName: node
-  linkType: hard
-
-"@prisma/extension-accelerate@npm:^0.6.2":
-  version: 0.6.2
-  resolution: "@prisma/extension-accelerate@npm:0.6.2"
-  peerDependencies:
-    "@prisma/client": ">=4.16.1"
-  checksum: bf506942660bd7cff1de0280932be3a9b4233cf6acb7cb07cdd8fcc0e0f2e30a23b261db3a7470b36eaaa1737d14ca59fc72024cab7899ddebfc4aa2056c9838
   languageName: node
   linkType: hard
 
