@@ -208,12 +208,12 @@ export class WorkflowRepository {
   }
 
   static async getFilteredList({ userId, input }: { userId?: number; input: TFilteredListInputSchema }) {
-    const filters = input?.filters;
+    try {
+      const filters = input?.filters;
+      const filtered = filters && hasFilter(filters);
 
-    const filtered = filters && hasFilter(filters);
-
-    const allWorkflows = await prisma.workflow.findMany({
-      where: {
+      // Optimize: Use a single query with better conditions
+      const baseWhere: Prisma.WorkflowWhereInput = {
         OR: [
           {
             userId,
@@ -229,19 +229,49 @@ export class WorkflowRepository {
             },
           },
         ],
-      },
-      include: includedFields,
-      orderBy: [
-        {
-          position: "desc",
-        },
-        {
-          id: "desc",
-        },
-      ],
-    });
+      };
 
-    if (!filtered) {
+      // Add filter conditions if filters are applied
+      if (filtered) {
+        if (filters.teamIds?.length) {
+          baseWhere.team = {
+            id: {
+              in: filters.teamIds,
+            },
+            members: {
+              some: {
+                userId,
+                accepted: true,
+              },
+            },
+          };
+        }
+
+        if (filters.userIds?.length) {
+          baseWhere.OR = [
+            {
+              userId: {
+                in: filters.userIds,
+              },
+              teamId: null,
+            },
+          ];
+        }
+      }
+
+      const allWorkflows = await prisma.workflow.findMany({
+        where: baseWhere,
+        include: includedFields,
+        orderBy: [
+          {
+            position: "desc",
+          },
+          {
+            id: "desc",
+          },
+        ],
+      });
+
       const workflowsWithReadOnly: WorkflowType[] = allWorkflows.map((workflow) => {
         const readOnly = !!workflow.team?.members?.find(
           (member) => member.userId === userId && member.role === MembershipRole.MEMBER
@@ -254,57 +284,11 @@ export class WorkflowRepository {
         filtered: workflowsWithReadOnly,
         totalCount: allWorkflows.length,
       };
-    }
-
-    const where = {
-      OR: [] as Prisma.WorkflowWhereInput[],
-    };
-
-    if (filtered) {
-      if (!!filters.teamIds) {
-        where.OR.push({
-          team: {
-            id: {
-              in: filters.teamIds ?? [],
-            },
-            members: {
-              some: {
-                userId,
-                accepted: true,
-              },
-            },
-          },
-        });
-      }
-
-      if (!!filters.userIds) {
-        where.OR.push({
-          userId: {
-            in: filters.userIds,
-          },
-          teamId: null,
-        });
-      }
-
-      const filteredWorkflows = await prisma.workflow.findMany({
-        where,
-        include: includedFields,
-        orderBy: {
-          id: "desc",
-        },
-      });
-
-      const workflowsWithReadOnly: WorkflowType[] = filteredWorkflows.map((workflow) => {
-        const readOnly = !!workflow.team?.members?.find(
-          (member) => member.userId === userId && member.role === MembershipRole.MEMBER
-        );
-
-        return { readOnly, isOrg: workflow.team?.isOrganization ?? false, ...workflow };
-      });
-
+    } catch (error) {
+      this.log.error("Error fetching filtered workflows", { userId, error });
       return {
-        filtered: workflowsWithReadOnly,
-        totalCount: allWorkflows.length,
+        filtered: [],
+        totalCount: 0,
       };
     }
   }

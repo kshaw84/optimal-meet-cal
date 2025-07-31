@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { forwardRef } from "react";
 
+import { suppressReact19RefWarnings } from "@calcom/lib/react19-compatibility";
 import classNames from "@calcom/ui/classNames";
 
 import type { ButtonColor } from "../button";
@@ -13,16 +14,24 @@ export const Dropdown = DropdownMenuPrimitive.Root;
 
 type DropdownMenuTriggerProps = ComponentProps<(typeof DropdownMenuPrimitive)["Trigger"]>;
 export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, DropdownMenuTriggerProps>(
-  ({ className = "", ...props }, forwardedRef) => (
-    <DropdownMenuPrimitive.Trigger
-      {...props}
-      className={classNames(
-        !props.asChild &&
-          `focus:bg-subtle hover:bg-muted text-default group-hover:text-emphasis inline-flex items-center rounded-md bg-transparent px-3 py-2 text-sm font-medium ring-0 transition ${className}`
-      )}
-      ref={forwardedRef}
-    />
-  )
+  ({ className = "", ...props }, forwardedRef) => {
+    const restoreConsole = suppressReact19RefWarnings();
+
+    try {
+      return (
+        <DropdownMenuPrimitive.Trigger
+          {...props}
+          className={classNames(
+            !props.asChild &&
+              `focus:bg-subtle hover:bg-muted text-default group-hover:text-emphasis inline-flex items-center rounded-md bg-transparent px-3 py-2 text-sm font-medium ring-0 transition ${className}`
+          )}
+          ref={forwardedRef}
+        />
+      );
+    } finally {
+      restoreConsole();
+    }
+  }
 );
 DropdownMenuTrigger.displayName = "DropdownMenuTrigger";
 

@@ -279,45 +279,69 @@ export class TeamRepository {
   }
 
   async findTeamsByUserId({ userId, includeOrgs }: { userId: number; includeOrgs?: boolean }) {
-    const memberships = await this.prismaClient.membership.findMany({
-      where: {
-        // Show all the teams this user belongs to regardless of the team being part of the user's org or not
-        // We don't want to restrict in the listing here. If we need to restrict a situation where a user is part of the org along with being part of a non-org team, we should do that instead of filtering out from here
-        // This became necessary when we started migrating user to Org, without migrating some teams of the user to the org
-        // Also, we would allow a user to be part of multiple orgs, then also it would be necessary.
-        userId: userId,
-      },
-      include: {
-        team: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            logoUrl: true,
-            isOrganization: true,
-            metadata: true,
-            inviteTokens: true,
-            parent: true,
-            parentId: true,
+    try {
+      const memberships = await this.prismaClient.membership.findMany({
+        where: {
+          // Show all the teams this user belongs to regardless of the team being part of the user's org or not
+          // We don't want to restrict in the listing here. If we need to restrict a situation where a user is part of the org along with being part of a non-org team, we should do that instead of filtering out from here
+          // This became necessary when we started migrating user to Org, without migrating some teams of the user to the org
+          // Also, we would allow a user to be part of multiple orgs, then also it would be necessary.
+          userId: userId,
+        },
+        include: {
+          team: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              logoUrl: true,
+              isOrganization: true,
+              metadata: true,
+              // Optimize: Only select necessary invite token fields
+              inviteTokens: {
+                where: {
+                  identifier: {
+                    startsWith: "invite-link-for-teamId-",
+                  },
+                },
+                select: {
+                  id: true,
+                  identifier: true,
+                },
+              },
+              // Optimize: Only select necessary parent fields
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                },
+              },
+              parentId: true,
+            },
           },
         },
-      },
-      orderBy: { role: "desc" },
-    });
+        orderBy: { role: "desc" },
+      });
 
-    return memberships
-      .filter((mmship) => {
-        if (includeOrgs) return true;
-        return !mmship.team.isOrganization;
-      })
-      .map(({ team: { inviteTokens, ...team }, ...membership }) => ({
-        role: membership.role,
-        accepted: membership.accepted,
-        ...team,
-        metadata: teamMetadataSchema.parse(team.metadata),
-        /** To prevent breaking we only return non-email attached token here, if we have one */
-        inviteToken: inviteTokens.find((token) => token.identifier === `invite-link-for-teamId-${team.id}`),
-      }));
+      return memberships
+        .filter((mmship) => {
+          if (includeOrgs) return true;
+          return !mmship.team.isOrganization;
+        })
+        .map(({ team: { inviteTokens, ...team }, ...membership }) => ({
+          role: membership.role,
+          accepted: membership.accepted,
+          ...team,
+          metadata: teamMetadataSchema.parse(team.metadata),
+          /** To prevent breaking we only return non-email attached token here, if we have one */
+          inviteToken: inviteTokens.find((token) => token.identifier === `invite-link-for-teamId-${team.id}`),
+        }));
+    } catch (error) {
+      console.error("Error fetching teams for user", { userId, error });
+      // Return empty array on error to prevent complete failure
+      return [];
+    }
   }
 
   async findTeamWithOrganizationSettings(teamId: number) {

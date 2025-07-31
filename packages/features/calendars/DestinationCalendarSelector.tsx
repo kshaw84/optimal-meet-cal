@@ -32,7 +32,7 @@ export const SingleValueComponent = ({ ...props }: SingleValueProps<Option>) => 
   const { label, subtitle } = props.data;
   return (
     <components.SingleValue {...props} className="flex space-x-1">
-      <p>{label}</p> <p className=" text-subtle">{subtitle}</p>
+      <p>{label}</p> <span className=" text-subtle">{subtitle}</span>
     </components.SingleValue>
   );
 };

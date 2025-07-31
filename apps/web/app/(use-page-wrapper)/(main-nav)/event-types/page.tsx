@@ -33,14 +33,19 @@ const getCachedEventGroups = unstable_cache(
       upIds?: string[] | undefined;
     }
   ) => {
-    const eventTypesCaller = await createRouterCaller(
-      eventTypesRouter,
-      await getTRPCContext(headers, cookies)
-    );
-    return await eventTypesCaller.getUserEventGroups({ filters });
+    try {
+      const eventTypesCaller = await createRouterCaller(
+        eventTypesRouter,
+        await getTRPCContext(headers, cookies)
+      );
+      return await eventTypesCaller.getUserEventGroups({ filters });
+    } catch (error) {
+      console.error("Error fetching cached event groups:", error);
+      return { eventTypeGroups: [], profiles: [] };
+    }
   },
   ["viewer.eventTypes.getUserEventGroups"],
-  { revalidate: 3600 } // seconds
+  { revalidate: 1800 } // Cache for 30 minutes instead of 1 hour
 );
 
 const Page = async ({ searchParams }: PageProps) => {

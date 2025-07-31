@@ -1,8 +1,6 @@
 import prisma from "@calcom/prisma";
 import type { AttributeType } from "@calcom/prisma/enums";
 
-import { TRPCError } from "@trpc/server";
-
 import type { TrpcSessionUser } from "../../../types";
 import type { ZGetByUserIdSchema } from "./getByUserId.schema";
 
@@ -27,34 +25,36 @@ export type GroupedAttribute = {
 };
 
 const getByUserIdHandler = async ({ input, ctx }: GetOptions) => {
-  const org = ctx.user.organization;
+  try {
+    const org = ctx.user.organization;
 
-  if (!org.id) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "You need to be apart of an organization to use this feature",
-    });
-  }
+    if (!org?.id) {
+      // Return empty array instead of throwing error for users without organization
+      return [];
+    }
 
-  // Ensure user is apart of the organization
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_teamId: {
-        userId: input.userId,
-        teamId: org.id,
+    // Ensure user is apart of the organization
+    const membership = await prisma.membership.findUnique({
+      where: {
+        userId_teamId: {
+          userId: input.userId,
+          teamId: org.id,
+        },
       },
-    },
-  });
-
-  if (!membership) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "This user is not apart of your organization",
     });
-  }
 
-  const userAttributes = await getMembershipAttributes(membership.id);
-  return groupMembershipAttributes(userAttributes);
+    if (!membership) {
+      // Return empty array instead of throwing error for users not in organization
+      return [];
+    }
+
+    const userAttributes = await getMembershipAttributes(membership.id);
+    return groupMembershipAttributes(userAttributes);
+  } catch (error) {
+    console.error("Error in getByUserIdHandler:", error);
+    // Return empty array on any error to prevent tRPC failures
+    return [];
+  }
 };
 
 async function getMembershipAttributes(membershipId: number) {

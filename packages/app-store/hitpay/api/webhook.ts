@@ -10,12 +10,6 @@ import prisma from "@calcom/prisma";
 
 import type { hitpayCredentialKeysSchema } from "../lib/hitpayCredentialKeysSchema";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 interface WebhookReturn {
   payment_id: string;
   payment_request_id: string;

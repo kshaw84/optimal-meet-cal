@@ -5,10 +5,12 @@ import React from "react";
 import CacheProvider from "react-inlinesvg/provider";
 
 import { WebPushProvider } from "@calcom/features/notifications/WebPushContext";
+import "@calcom/lib/react19-compatibility";
 import { trpc } from "@calcom/trpc/react";
 
 import type { AppProps } from "@lib/app-providers";
 
+import "../lib/react19-warnings";
 import "../styles/globals.css";
 
 function MyApp(props: AppProps) {

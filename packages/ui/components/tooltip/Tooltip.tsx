@@ -3,6 +3,7 @@
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import React from "react";
 
+import { suppressReact19RefWarnings } from "@calcom/lib/react19-compatibility";
 import classNames from "@calcom/ui/classNames";
 
 // React 19 compatibility wrapper
@@ -10,19 +11,12 @@ const React19CompatibleTrigger = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
 >((props, ref) => {
-  // Suppress React 19 deprecation warning for element.ref
-  const originalConsoleError = console.error;
-  console.error = (...args) => {
-    if (args[0]?.includes?.("Accessing element.ref was removed in React 19")) {
-      return;
-    }
-    originalConsoleError.apply(console, args);
-  };
+  const restoreConsole = suppressReact19RefWarnings();
 
   try {
     return <TooltipPrimitive.Trigger ref={ref} {...props} />;
   } finally {
-    console.error = originalConsoleError;
+    restoreConsole();
   }
 });
 

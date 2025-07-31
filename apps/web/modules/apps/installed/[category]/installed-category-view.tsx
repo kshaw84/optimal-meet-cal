@@ -2,7 +2,6 @@
 
 import { useReducer } from "react";
 
-import getAppCategoryTitle from "@calcom/app-store/_utils/getAppCategoryTitle";
 import { AppList, type HandleDisconnect } from "@calcom/features/apps/components/AppList";
 import type { UpdateUsersDefaultConferencingAppParams } from "@calcom/features/apps/components/AppSetDefaultLinkDialog";
 import DisconnectIntegrationModal from "@calcom/features/apps/components/DisconnectIntegrationModal";
@@ -29,28 +28,43 @@ interface IntegrationsContainerProps {
   handleDisconnect: HandleDisconnect;
 }
 
-const IntegrationsContainer = ({
-  variant,
-  exclude,
-  handleDisconnect,
-}: IntegrationsContainerProps): JSX.Element => {
+const IntegrationsContainer = ({ variant, exclude, handleDisconnect }: IntegrationsContainerProps) => {
   const { t } = useLocale();
   const utils = trpc.useUtils();
-  const query = trpc.viewer.apps.integrations.useQuery({
-    variant,
-    exclude,
-    onlyInstalled: true,
-    includeTeamInstalledApps: true,
-  });
 
-  const { data: defaultConferencingApp } = trpc.viewer.apps.getUsersDefaultConferencingApp.useQuery();
+  // Optimize: Use a single query with better caching
+  const query = trpc.viewer.apps.integrations.useQuery(
+    {
+      variant,
+      exclude,
+      onlyInstalled: true,
+      includeTeamInstalledApps: true,
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    }
+  );
+
+  // Optimize: Use a single query for default conferencing app with caching
+  const { data: defaultConferencingApp } = trpc.viewer.apps.getUsersDefaultConferencingApp.useQuery(
+    undefined,
+    {
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    }
+  );
 
   const updateDefaultAppMutation = trpc.viewer.apps.updateUserDefaultConferencingApp.useMutation();
 
   const updateLocationsMutation = trpc.viewer.eventTypes.bulkUpdateToDefaultLocation.useMutation();
 
+  // Optimize: Use a single query for event types with caching
   const { data: eventTypesQueryData, isFetching: isEventTypesFetching } =
-    trpc.viewer.eventTypes.bulkEventFetch.useQuery();
+    trpc.viewer.eventTypes.bulkEventFetch.useQuery(undefined, {
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    });
 
   const handleUpdateUserDefaultConferencingApp = ({
     appSlug,
@@ -116,21 +130,22 @@ const IntegrationsContainer = ({
       customLoader={<SkeletonLoader />}
       success={({ data }) => {
         if (!data.items.length) {
-          const emptyHeaderCategory = getAppCategoryTitle(variant || "other", true);
-
           return (
             <EmptyScreen
-              Icon={emptyIcon[variant || "other"]}
-              headline={t("no_category_apps", {
-                category: emptyHeaderCategory,
-              })}
-              description={t(`no_category_apps_description_${variant || "other"}`)}
+              Icon="grid-3x3"
+              headline={t("no_apps", { category: variant || "other" })}
+              description={t("no_apps_description", { category: variant || "other" })}
+              buttonText={t("browse_apps")}
+              buttonOnClick={() => {
+                window.location.href = variant ? `/apps/categories/${variant}` : "/apps";
+              }}
               buttonRaw={
                 <Button
+                  data-testid="add-apps"
+                  href={variant ? `/apps/categories/${variant}` : "/apps"}
                   color="secondary"
-                  data-testid={`connect-${variant || "other"}-apps`}
-                  href={variant ? `/apps/categories/${variant}` : "/apps/categories/other"}>
-                  {t(`connect_${variant || "other"}_apps`)}
+                  StartIcon="plus">
+                  {t("add")}
                 </Button>
               }
             />

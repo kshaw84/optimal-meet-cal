@@ -1,4 +1,5 @@
 import { _generateMetadata } from "app/_utils";
+import { unstable_cache } from "next/cache";
 import { cookies, headers } from "next/headers";
 
 import { getServerSession } from "@calcom/features/auth/lib/getServerSession";
@@ -17,15 +18,27 @@ export const generateMetadata = async () =>
     "/insights"
   );
 
+const getCachedUserTimezone = unstable_cache(
+  async (userId: number) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { timeZone: true },
+      });
+      return user?.timeZone || "UTC";
+    } catch (error) {
+      console.error("Error fetching cached user timezone", { userId, error });
+      return "UTC";
+    }
+  },
+  undefined,
+  { revalidate: 3600, tags: ["user.timezone"] } // Cache for 1 hour
+);
+
 const ServerPage = async () => {
   const session = await getServerSession({ req: buildLegacyRequest(await headers(), await cookies()) });
 
-  const { timeZone } = await prisma.user.findUniqueOrThrow({
-    where: { id: session?.user.id ?? -1 },
-    select: {
-      timeZone: true,
-    },
-  });
+  const timeZone = await getCachedUserTimezone(session?.user.id ?? -1);
 
   return <InsightsPage timeZone={timeZone} />;
 };

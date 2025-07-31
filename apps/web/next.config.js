@@ -179,6 +179,7 @@ const nextConfig = {
     "superagent-proxy", // Dependencies of @tryvital/vital-node
     "superagent", // Dependencies of akismet
     "formidable", // Dependencies of akismet
+    "sharp", // Prevent Sharp from being bundled
   ],
   experimental: {
     // externalize server-side node_modules with size > 1mb, to improve dev mode performance/RAM usage
@@ -232,6 +233,20 @@ const nextConfig = {
     }
 
     config.plugins.push(new webpack.DefinePlugin({ "process.env.BUILD_ID": JSON.stringify(buildId) }));
+
+    // Suppress React 19 warnings in webpack
+    config.plugins.push(
+      new webpack.DefinePlugin({
+        "process.env.SUPPRESS_REACT_19_WARNINGS": JSON.stringify("true"),
+      })
+    );
+
+    // Suppress package version warnings
+    config.plugins.push(
+      new webpack.DefinePlugin({
+        "process.env.SUPPRESS_PACKAGE_WARNINGS": JSON.stringify("true"),
+      })
+    );
 
     config.resolve.fallback = {
       ...config.resolve.fallback, // if you miss it, all the other options in fallback, specified

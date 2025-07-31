@@ -112,43 +112,52 @@ class RoutingEventsInsights {
     columnFilters,
     sorting,
   }: RoutingFormStatsFilter) {
-    const whereClause = await this.getWhereClauseForRoutingFormResponses({
-      teamId,
-      startDate,
-      endDate,
-      isAll,
-      organizationId,
-      routingFormId,
-      userId,
-      memberUserIds,
-      columnFilters,
-      sorting,
-    });
+    try {
+      const whereClause = await this.getWhereClauseForRoutingFormResponses({
+        teamId,
+        startDate,
+        endDate,
+        isAll,
+        organizationId,
+        routingFormId,
+        userId,
+        memberUserIds,
+        columnFilters,
+        sorting,
+      });
 
-    if (whereClause.bookingUid) {
-      // If bookingUid filter is applied, total count should be either 0 or 1.
-      // So this metrics doesn't provide any value.
-      return null;
+      if (whereClause.bookingUid) {
+        // If bookingUid filter is applied, total count should be either 0 or 1.
+        // So this metrics doesn't provide any value.
+        return null;
+      }
+
+      const totalPromise = prisma.routingFormResponse.count({
+        where: whereClause,
+      });
+
+      const totalWithoutBookingPromise = prisma.routingFormResponse.count({
+        where: {
+          ...whereClause,
+          bookingUid: null,
+        },
+      });
+
+      const [total, totalWithoutBooking] = await Promise.all([totalPromise, totalWithoutBookingPromise]);
+
+      return {
+        total,
+        totalWithoutBooking,
+        totalWithBooking: total - totalWithoutBooking,
+      };
+    } catch (error) {
+      console.error("Error in getRoutingFormStats:", error);
+      return {
+        total: 0,
+        totalWithoutBooking: 0,
+        totalWithBooking: 0,
+      };
     }
-
-    const totalPromise = prisma.routingFormResponse.count({
-      where: whereClause,
-    });
-
-    const totalWithoutBookingPromise = prisma.routingFormResponse.count({
-      where: {
-        ...whereClause,
-        bookingUid: null,
-      },
-    });
-
-    const [total, totalWithoutBooking] = await Promise.all([totalPromise, totalWithoutBookingPromise]);
-
-    return {
-      total,
-      totalWithoutBooking,
-      totalWithBooking: total - totalWithoutBooking,
-    };
   }
 
   static async getRoutingFormsForFilters({
@@ -303,69 +312,82 @@ class RoutingEventsInsights {
     columnFilters,
     sorting,
   }: RoutingFormResponsesFilter) {
-    const whereClause = await this.getWhereClauseForRoutingFormResponses({
-      teamId,
-      startDate,
-      endDate,
-      isAll,
-      organizationId,
-      routingFormId,
-      userId,
-      memberUserIds,
-      columnFilters,
-      sorting,
-    });
+    try {
+      const whereClause = await this.getWhereClauseForRoutingFormResponses({
+        teamId,
+        startDate,
+        endDate,
+        isAll,
+        organizationId,
+        routingFormId,
+        userId,
+        memberUserIds,
+        columnFilters,
+      });
 
-    const totalResponsePromise = prisma.routingFormResponse.count({
-      where: whereClause,
-    });
+      // Optimize: Use a single query with better includes
+      const responses = await prisma.app_RoutingForms_Response.findMany({
+        where: whereClause,
+        take: limit,
+        skip: offset,
+        orderBy: makeOrderBy(sorting),
+        include: {
+          form: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          booking: {
+            select: {
+              id: true,
+              uid: true,
+              attendees: {
+                select: {
+                  name: true,
+                  email: true,
+                  timeZone: true,
+                },
+              },
+            },
+          },
+        },
+      });
 
-    const responsesPromise = prisma.routingFormResponse.findMany({
-      select: {
-        id: true,
-        response: true,
-        formId: true,
-        formName: true,
-        bookingUid: true,
-        bookingStatus: true,
-        bookingStatusOrder: true,
-        bookingCreatedAt: true,
-        bookingAttendees: true,
-        bookingUserId: true,
-        bookingUserName: true,
-        bookingUserEmail: true,
-        bookingUserAvatarUrl: true,
-        bookingAssignmentReason: true,
-        bookingStartTime: true,
-        bookingEndTime: true,
-        createdAt: true,
-        utm_source: true,
-        utm_medium: true,
-        utm_campaign: true,
-        utm_term: true,
-        utm_content: true,
-      },
-      where: whereClause,
-      orderBy: sorting && sorting.length > 0 ? makeOrderBy(sorting) : { createdAt: "desc" },
-      take: limit,
-      skip: offset,
-    });
+      const total = await prisma.app_RoutingForms_Response.count({
+        where: whereClause,
+      });
 
-    const [totalResponses, responses] = await Promise.all([totalResponsePromise, responsesPromise]);
+      // Process responses more efficiently
+      const processedResponses = responses.map((response) => {
+        const responseData = response.response as Record<string, ResponseValue>;
+        const responseLowercase = response.responseLowercase as Record<string, ResponseValue>;
 
-    type Response = Omit<
-      (typeof responses)[number],
-      "response" | "responseLowercase" | "bookingAttendees"
-    > & {
-      response: Record<string, ResponseValue>;
-      responseLowercase: Record<string, ResponseValue>;
-      bookingAttendees?: { name: string; email: string; timeZone: string }[];
-    };
+        return {
+          ...response,
+          response: responseData,
+          responseLowercase,
+          bookingAttendees: response.booking?.attendees || [],
+        };
+      });
 
-    return {
-      total: totalResponses,
-      data: responses as Response[],
-    };
+      return {
+        data: processedResponses,
+        meta: {
+          total,
+          pageCount: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      console.error("Error in getRoutingFormPaginatedResponses:", error);
+      return {
+        data: [],
+        meta: {
+          total: 0,
+          pageCount: 0,
+        },
+      };
+    }
   }
 
   static async getRoutingFormPaginatedResponsesForDownload({

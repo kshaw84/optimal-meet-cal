@@ -2,6 +2,7 @@ import { calendar_v3 } from "@googleapis/calendar";
 import type { Membership, Team, UserPermissionRole } from "@prisma/client";
 import { waitUntil } from "@vercel/functions";
 import { OAuth2Client } from "googleapis-common";
+import { LRUCache } from "lru-cache";
 import type { AuthOptions, Session, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import { encode } from "next-auth/jwt";
@@ -15,7 +16,7 @@ import GoogleCalendarService from "@calcom/app-store/googlecalendar/lib/Calendar
 import { LicenseKeySingleton } from "@calcom/ee/common/server/LicenseKeyService";
 import createUsersAndConnectToOrg from "@calcom/features/ee/dsync/lib/users/createUsersAndConnectToOrg";
 import ImpersonationProvider from "@calcom/features/ee/impersonation/lib/ImpersonationProvider";
-import { getOrgFullOrigin, subdomainSuffix } from "@calcom/features/ee/organizations/lib/orgDomains";
+import { getOrgFullOrigin } from "@calcom/features/ee/organizations/lib/orgDomains";
 import { clientSecretVerifier, hostedCal, isSAMLLoginEnabled } from "@calcom/features/ee/sso/lib/saml";
 import { checkRateLimitAndThrowError } from "@calcom/lib/checkRateLimitAndThrowError";
 import {
@@ -50,6 +51,10 @@ import CalComAdapter from "./next-auth-custom-adapter";
 import { verifyPassword } from "./verifyPassword";
 
 const log = logger.getSubLogger({ prefix: ["next-auth-options"] });
+
+// Add caching for JWT token processing
+const JWT_CACHE = new LRUCache<string, any>({ max: 1000, ttl: 1000 * 60 * 5 }); // 5 minutes
+
 const GOOGLE_API_CREDENTIALS = process.env.GOOGLE_API_CREDENTIALS || "{}";
 const { client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET } =
   JSON.parse(GOOGLE_API_CREDENTIALS)?.web || {};
@@ -490,6 +495,14 @@ export const getOptions = ({
         } as JWT;
       }
       const autoMergeIdentities = async () => {
+        // Check cache first
+        const cacheKey = `user:${token.email}`;
+        const cachedUser = JWT_CACHE.get(cacheKey);
+        if (cachedUser) {
+          log.debug("Using cached user data", { email: token.email });
+          return cachedUser;
+        }
+
         const existingUser = await prisma.user.findFirst({
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           where: { email: token.email! },
@@ -546,7 +559,7 @@ export const getOptions = ({
           orgRole = membership?.role;
         }
 
-        return {
+        const result = {
           ...existingUserWithoutTeamsField,
           ...token,
           profileId: profile.id,
@@ -564,11 +577,14 @@ export const getOptions = ({
                   slug: profileOrg.slug ?? profileOrg.requestedSlug ?? "",
                   logoUrl: profileOrg.logoUrl,
                   fullDomain: getOrgFullOrigin(profileOrg.slug ?? profileOrg.requestedSlug ?? ""),
-                  domainSuffix: subdomainSuffix(),
-                  role: orgRole as MembershipRole, // It can't be undefined if we have a profileOrg
+                  isOrgAdmin: orgRole === "ADMIN" || orgRole === "OWNER",
                 }
               : null,
-        } as JWT;
+        };
+
+        // Cache the result
+        JWT_CACHE.set(cacheKey, result);
+        return result;
       };
       if (!user) {
         return await autoMergeIdentities();

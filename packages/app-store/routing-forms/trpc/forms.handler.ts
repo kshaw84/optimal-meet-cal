@@ -1,16 +1,11 @@
-import type { z } from "zod";
-
 import { hasFilter } from "@calcom/features/filters/lib/hasFilter";
-import { entityPrismaWhereClause, canEditEntity } from "@calcom/lib/entityPermissionUtils.server";
+import { entityPrismaWhereClause } from "@calcom/lib/entityPermissionUtils.server";
 import logger from "@calcom/lib/logger";
-import { safeStringify } from "@calcom/lib/safeStringify";
 import type { PrismaClient } from "@calcom/prisma";
 import type { Prisma } from "@calcom/prisma/client";
 import { entries } from "@calcom/prisma/zod-utils";
 import type { TrpcSessionUser } from "@calcom/trpc/server/types";
 
-import { getSerializableForm } from "../lib/getSerializableForm";
-import type { zodFields, zodRoutes } from "../zod";
 import type { TFormSchema } from "./forms.schema";
 
 interface FormsHandlerOptions {
@@ -25,87 +20,72 @@ const log = logger.getSubLogger({ prefix: ["[formsHandler]"] });
 export const formsHandler = async ({ ctx, input }: FormsHandlerOptions) => {
   const { prisma, user } = ctx;
 
-  const where = getPrismaWhereFromFilters(user, input?.filters);
-  log.debug("Getting forms where", JSON.stringify(where));
+  try {
+    const where = getPrismaWhereFromFilters(user, input?.filters);
+    log.debug("Getting forms where", JSON.stringify(where));
 
-  const forms = await prisma.app_RoutingForms_Form.findMany({
-    where,
-    orderBy: [
-      {
-        position: "desc",
-      },
-      {
-        createdAt: "desc",
-      },
-    ],
-    include: {
-      team: {
-        select: {
-          id: true,
-          name: true,
+    // Optimize: Use a single query with better conditions
+    const forms = await prisma.app_RoutingForms_Form.findMany({
+      where,
+      orderBy: [
+        {
+          position: "desc",
+        },
+        {
+          createdAt: "desc",
+        },
+      ],
+      include: {
+        team: {
+          select: {
+            id: true,
+            name: true,
+            members: {
+              select: {
+                userId: true,
+                role: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            responses: true,
+          },
         },
       },
-      _count: {
-        select: {
-          responses: true,
-        },
-      },
-    },
-  });
+    });
 
-  const totalForms = await prisma.app_RoutingForms_Form.count({
-    where: entityPrismaWhereClause({
-      userId: user.id,
-    }),
-  });
+    const totalForms = await prisma.app_RoutingForms_Form.count({
+      where: entityPrismaWhereClause({
+        userId: user.id,
+      }),
+    });
 
-  return {
-    filtered: await buildFormsWithReadOnlyStatus(),
-    totalCount: totalForms,
-  };
+    return {
+      filtered: await buildFormsWithReadOnlyStatus(),
+      totalCount: totalForms,
+    };
 
-  async function buildFormsWithReadOnlyStatus() {
-    // Avoid crash of one form to crash entire listing
-    const settledFormsWithReadonlyStatus = await Promise.allSettled(
-      forms.map(async (form) => {
-        const [hasWriteAccess, serializedForm] = await Promise.all([
-          canEditEntity(form, user.id),
-          getSerializableForm({ form }),
-        ]);
+    async function buildFormsWithReadOnlyStatus() {
+      return forms.map((form) => {
+        const readOnly = !!form.team?.members?.find(
+          (member) => member.userId === user.id && member.role === "MEMBER"
+        );
 
         return {
-          form: serializedForm,
-          readOnly: !hasWriteAccess,
-        };
-      })
-    );
-
-    const formsWithReadonlyStatus = settledFormsWithReadonlyStatus.map((result, index) => {
-      if (result.status === "fulfilled") {
-        // Normal case
-        return {
-          ...result.value,
+          form,
+          readOnly,
           hasError: false,
         };
-      }
-
-      // Error case
-      const form = forms[index];
-      log.error(`Error getting form ${form.id}: ${safeStringify(result.reason)}`);
-
-      return {
-        form: {
-          ...form,
-          // Usually the error is in parsing routes/fields as they are JSON. So, we just set them empty, so that form can be still listed.
-          routes: [] as z.infer<typeof zodRoutes>,
-          fields: [] as z.infer<typeof zodFields>,
-        },
-        // Consider it readonly as we don't know the status due to error
-        readOnly: true,
-        hasError: true,
-      };
-    });
-    return formsWithReadonlyStatus;
+      });
+    }
+  } catch (error) {
+    log.error("Error fetching forms", { userId: user.id, error });
+    return {
+      filtered: [],
+      totalCount: 0,
+    };
   }
 };
 

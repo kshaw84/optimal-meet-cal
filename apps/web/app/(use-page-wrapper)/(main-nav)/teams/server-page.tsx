@@ -14,14 +14,19 @@ import { TeamsCTA } from "./CTA";
 
 const getCachedTeams = unstable_cache(
   async (userId: number) => {
-    const teamRepo = new TeamRepository(prisma);
-    return await teamRepo.findTeamsByUserId({
-      userId,
-      includeOrgs: true,
-    });
+    try {
+      const teamRepo = new TeamRepository(prisma);
+      return await teamRepo.findTeamsByUserId({
+        userId,
+        includeOrgs: true,
+      });
+    } catch (error) {
+      console.error("Error fetching cached teams", { userId, error });
+      return [];
+    }
   },
   undefined,
-  { revalidate: 3600, tags: ["viewer.teams.list"] } // Cache for 1 hour
+  { revalidate: 1800, tags: ["viewer.teams.list"] } // Cache for 30 minutes instead of 1 hour
 );
 
 export const ServerTeamsListing = async ({

@@ -101,19 +101,29 @@ export const getUserSession = async (ctx: TRPCContextInner) => {
   const session = ctx.session || (await getSession(ctx));
   const user = session ? await getUserFromSession(ctx, session) : null;
   let foundProfile = null;
-  // Check authorization for profile
+
+  // Optimize: Only check profile authorization if we have both session and user
   if (session?.profileId && user?.id) {
-    foundProfile = await ProfileRepository.findByUserIdAndProfileId({
-      userId: user.id,
-      profileId: session.profileId,
-    });
-    if (!foundProfile) {
-      logger.error(
-        "Profile not found or not authorized",
-        safeStringify({ profileId: session.profileId, userId: user?.id })
-      );
-      // TODO: Test that logout should happen automatically
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "Profile not found or not authorized" });
+    try {
+      foundProfile = await ProfileRepository.findByUserIdAndProfileId({
+        userId: user.id,
+        profileId: session.profileId,
+      });
+      if (!foundProfile) {
+        logger.error(
+          "Profile not found or not authorized",
+          safeStringify({ profileId: session.profileId, userId: user?.id })
+        );
+        // TODO: Test that logout should happen automatically
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Profile not found or not authorized" });
+      }
+    } catch (error) {
+      logger.error("Error checking profile authorization", {
+        error,
+        profileId: session.profileId,
+        userId: user?.id,
+      });
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Profile authorization failed" });
     }
   }
 

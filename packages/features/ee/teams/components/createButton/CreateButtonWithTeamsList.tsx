@@ -13,8 +13,10 @@ export function CreateButtonWithTeamsList(
     includeOrg?: boolean;
   }
 ) {
+  const { includeOrg, onlyShowWithTeams, onlyShowWithNoTeams, isAdmin, ...restProps } = props;
+
   const query = trpc.viewer.loggedInViewerRouter.teamsAndUserProfilesQuery.useQuery({
-    includeOrg: props.includeOrg,
+    includeOrg,
   });
   if (!query.data) return null;
 
@@ -29,7 +31,7 @@ export function CreateButtonWithTeamsList(
       };
     });
 
-  if (props.isAdmin) {
+  if (isAdmin) {
     teamsAndUserProfiles.push({
       platform: true,
       label: "Platform",
@@ -39,9 +41,9 @@ export function CreateButtonWithTeamsList(
     });
   }
 
-  if (props.onlyShowWithTeams && teamsAndUserProfiles.length < 2) return null;
+  if (onlyShowWithTeams && teamsAndUserProfiles.length < 2) return null;
 
-  if (props.onlyShowWithNoTeams && teamsAndUserProfiles.length > 1) return null;
+  if (onlyShowWithNoTeams && teamsAndUserProfiles.length > 1) return null;
 
-  return <CreateButton {...props} options={teamsAndUserProfiles} />;
+  return <CreateButton {...restProps} options={teamsAndUserProfiles} />;
 }

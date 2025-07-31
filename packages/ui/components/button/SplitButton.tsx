@@ -4,6 +4,8 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import { forwardRef } from "react";
 
+import { suppressReact19RefWarnings } from "@calcom/lib/react19-compatibility";
+
 import { Icon } from "../icon";
 import type { ButtonBaseProps, ButtonProps } from "./Button";
 import { Button, buttonClasses } from "./Button";
@@ -44,15 +46,24 @@ export const SplitButton = forwardRef<HTMLButtonElement, SplitButtonProps>(funct
       </Button>
       <DropdownMenuPrimitive.Root>
         <DropdownMenuPrimitive.Trigger asChild>
-          <button
-            className={buttonClasses({
-              variant: "button",
-              color,
-              size: mainButtonProps.size,
-              className: "rounded-l-none px-2",
-            })}>
-            <Icon name="chevron-down" className="h-4 w-4" />
-          </button>
+          {(() => {
+            const restoreConsole = suppressReact19RefWarnings();
+            try {
+              return (
+                <button
+                  className={buttonClasses({
+                    variant: "button",
+                    color,
+                    size: mainButtonProps.size,
+                    className: "rounded-l-none px-2",
+                  })}>
+                  <Icon name="chevron-down" className="h-4 w-4" />
+                </button>
+              );
+            } finally {
+              restoreConsole();
+            }
+          })()}
         </DropdownMenuPrimitive.Trigger>
 
         <DropdownMenuPrimitive.Portal>

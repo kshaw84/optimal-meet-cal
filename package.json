@@ -118,11 +118,18 @@
     "@daily-co/daily-js": "^0.76.0",
     "@evyweb/ioctopus": "^1.2.0",
     "@next/third-parties": "^14.2.5",
+    "@opentelemetry/core": "^1.30.1",
+    "@opentelemetry/instrumentation-http": "^0.50.0",
     "@vercel/functions": "^1.4.0",
     "city-timezones": "^1.2.1",
     "eslint": "^8.34.0",
+    "https-proxy-agent": "^5.0.1",
+    "jsdom": "^22.0.0",
     "p-limit": "^6.2.0",
-    "turbo": "^1.10.1"
+    "rrweb-cssom": "^0.6.0",
+    "tough-cookie": "^4.1.4",
+    "turbo": "^1.10.1",
+    "whatwg-url": "^12.0.1"
   },
   "resolutions": {
     "types-ramda": "0.29.4",
@@ -136,7 +143,8 @@
     "dayjs@^1": "patch:dayjs@npm%3A1.11.4#./.yarn/patches/dayjs-npm-1.11.4-97921cd375.patch",
     "dayjs@^1.8.29": "patch:dayjs@npm%3A1.11.4#./.yarn/patches/dayjs-npm-1.11.4-97921cd375.patch",
     "@prisma/client@^5.4.2": "patch:@prisma/client@npm%3A5.4.2#./.yarn/patches/@prisma-client-npm-5.4.2-fca489b2dc.patch",
-    "@prisma/client@5.4.2": "patch:@prisma/client@npm%3A5.4.2#./.yarn/patches/@prisma-client-npm-5.4.2-fca489b2dc.patch"
+    "@prisma/client@5.4.2": "patch:@prisma/client@npm%3A5.4.2#./.yarn/patches/@prisma-client-npm-5.4.2-fca489b2dc.patch",
+    "sharp": "npm:empty@1.0.0"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [

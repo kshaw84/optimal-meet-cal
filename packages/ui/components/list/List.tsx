@@ -13,17 +13,18 @@ export type ListProps = {
 } & JSX.IntrinsicElements["ul"];
 
 export function List(props: ListProps) {
+  const { noBorderTreatment, roundContainer, className, ...restProps } = props;
+
   return (
     <ul
       data-testid="list"
-      {...props}
+      {...restProps}
       className={classNames(
         "mx-0 rounded-sm sm:overflow-hidden ",
         // Add rounded top and bottom if roundContainer is true
-        props.roundContainer && "[&>*:first-child]:rounded-t-md [&>*:last-child]:rounded-b-md ",
-        !props.noBorderTreatment &&
-          "border-subtle divide-subtle divide-y rounded-md border border-l border-r ",
-        props.className
+        roundContainer && "[&>*:first-child]:rounded-t-md [&>*:last-child]:rounded-b-md ",
+        !noBorderTreatment && "border-subtle divide-subtle divide-y rounded-md border border-l border-r ",
+        className
       )}>
       {props.children}
     </ul>
@@ -103,7 +104,7 @@ export function ListLinkItem(props: ListLinkItemProps) {
             </Badge>
           )}
         </div>
-        <h2 className="min-h-4 mt-2 text-sm font-normal leading-none text-neutral-600">
+        <h2 className="mt-2 min-h-4 text-sm font-normal leading-none text-neutral-600">
           {subHeading.substring(0, 100)}
           {subHeading.length > 100 && "..."}
         </h2>

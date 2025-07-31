@@ -1,3 +1,5 @@
+import { LRUCache } from "lru-cache";
+
 import { appStoreMetadata } from "@calcom/app-store/appStoreMetaData";
 import { getAppFromSlug } from "@calcom/app-store/utils";
 import getInstallCountPerApp from "@calcom/lib/apps/getInstallCountPerApp";
@@ -8,6 +10,12 @@ import { userMetadata } from "@calcom/prisma/zod-utils";
 import type { AppFrontendPayload as App } from "@calcom/types/App";
 import type { CredentialFrontendPayload as Credential } from "@calcom/types/Credential";
 
+// Cache for app registry data
+const APP_REGISTRY_CACHE = new LRUCache<string, any>({
+  max: 100,
+  ttl: 1000 * 60 * 5, // 5 minutes
+});
+
 export type TDependencyData = {
   name?: string;
   installed?: boolean;
@@ -17,49 +25,61 @@ export type TDependencyData = {
  * Get App metadata either using dirName or slug
  */
 export async function getAppWithMetadata(app: { dirName: string } | { slug: string }) {
-  let appMetadata: App | null;
+  // Convert appStoreMetadata object to array for searching
+  const appMetadataArray = Object.values(appStoreMetadata);
 
-  if ("dirName" in app) {
-    appMetadata = appStoreMetadata[app.dirName as keyof typeof appStoreMetadata] as App;
-  } else {
-    const foundEntry = Object.entries(appStoreMetadata).find(([, meta]) => {
-      return meta.slug === app.slug;
-    });
-    if (!foundEntry) return null;
-    appMetadata = foundEntry[1] as App;
+  const appMetadata = appMetadataArray.find((metadata) => {
+    if ("dirName" in app) {
+      return metadata.dirName === app.dirName;
+    }
+    return metadata.slug === app.slug;
+  });
+
+  if (!appMetadata) {
+    return null;
   }
 
-  if (!appMetadata) return null;
-  // Let's not leak api keys to the front end
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { key, ...metadata } = appMetadata;
   return metadata;
 }
 
 /** Mainly to use in listings for the frontend, use in getStaticProps or getServerSideProps */
 export async function getAppRegistry() {
-  const dbApps = await prisma.app.findMany({
-    where: { enabled: true },
-    select: { dirName: true, slug: true, categories: true, enabled: true, createdAt: true },
-  });
-  const apps = [] as App[];
-  const installCountPerApp = await getInstallCountPerApp();
-  for await (const dbapp of dbApps) {
-    const app = await getAppWithMetadata(dbapp);
-    if (!app) continue;
-    // Skip if app isn't installed
-    /* This is now handled from the DB */
-    // if (!app.installed) return apps;
-    app.createdAt = dbapp.createdAt.toISOString();
-    apps.push({
-      ...app,
-      category: app.category || "other",
-      installed:
-        true /* All apps from DB are considered installed by default. @TODO: Add and filter our by `enabled` property */,
-      installCount: installCountPerApp[dbapp.slug] || 0,
-    });
+  const cacheKey = "app-registry";
+  const cached = APP_REGISTRY_CACHE.get(cacheKey);
+  if (cached) {
+    return cached;
   }
-  return apps;
+
+  try {
+    const dbApps = await prisma.app.findMany({
+      where: { enabled: true },
+      select: { dirName: true, slug: true, categories: true, enabled: true, createdAt: true },
+    });
+    const apps = [] as App[];
+    const installCountPerApp = await getInstallCountPerApp();
+    for await (const dbapp of dbApps) {
+      const app = await getAppWithMetadata(dbapp);
+      if (!app) continue;
+      // Skip if app isn't installed
+      /* This is now handled from the DB */
+      // if (!app.installed) return apps;
+      app.createdAt = dbapp.createdAt.toISOString();
+      apps.push({
+        ...app,
+        category: app.category || "other",
+        installed:
+          true /* All apps from DB are considered installed by default. @TODO: Add and filter our by `enabled` property */,
+        installCount: installCountPerApp[dbapp.slug] || 0,
+      });
+    }
+
+    APP_REGISTRY_CACHE.set(cacheKey, apps);
+    return apps;
+  } catch (error) {
+    console.error("Error fetching app registry", error);
+    return [];
+  }
 }
 
 export async function getAppRegistryWithCredentials(userId: number, userAdminTeams: UserAdminTeams = []) {

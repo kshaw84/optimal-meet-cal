@@ -12,7 +12,16 @@ import { usageTrackingExtention } from "./extensions/usage-tracking";
 import { bookingReferenceMiddleware } from "./middleware";
 
 const datasourceUrl = process.env.DATABASE_URL;
-const prismaOptions: Prisma.PrismaClientOptions = {};
+const prismaOptions: Prisma.PrismaClientOptions = {
+  // Add connection pooling for better performance
+  datasources: {
+    db: {
+      url: datasourceUrl,
+    },
+  },
+  // Optimize for development performance
+  log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+};
 
 // Add SSL configuration for Supabase
 if (datasourceUrl) {
@@ -27,6 +36,9 @@ if (datasourceUrl) {
     url.searchParams.set("sslcert", "");
     url.searchParams.set("sslkey", "");
     url.searchParams.set("sslrootcert", certPath);
+    // Add connection pooling parameters
+    url.searchParams.set("pool_timeout", "20");
+    url.searchParams.set("connection_limit", "10");
 
     prismaOptions.datasources = {
       db: {
@@ -35,17 +47,20 @@ if (datasourceUrl) {
     };
     console.log("🔒 Prisma using Supabase SSL certificate for secure database connection");
   } catch (error) {
-    // If certificate file not found, fall back to no-verify mode
+    // If certificate file not found, fall back to optimized no-verify mode
     if (process.env.PGSSLMODE === "no-verify") {
       const url = new URL(datasourceUrl);
       url.searchParams.set("sslmode", "require");
+      // Add connection pooling parameters
+      url.searchParams.set("pool_timeout", "20");
+      url.searchParams.set("connection_limit", "10");
 
       prismaOptions.datasources = {
         db: {
           url: url.toString(),
         },
       };
-      console.log("⚠️ Prisma using SSL with certificate verification disabled");
+      console.log("⚠️ Prisma using SSL with certificate verification disabled (optimized)");
     }
   }
 }
@@ -71,7 +86,7 @@ if (!isNaN(loggerLevel)) {
       break;
     default:
       // For values 0, 1, 2 (or anything else below 3)
-      prismaOptions.log = ["query", "info", "error", "warn"];
+      prismaOptions.log = ["error", "warn"]; // Reduced logging for better performance
       break;
   }
 }

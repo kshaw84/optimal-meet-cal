@@ -10,19 +10,18 @@ import { HttpError as HttpCode } from "@calcom/lib/http-error";
 import { handlePaymentSuccess } from "@calcom/lib/payment/handlePaymentSuccess";
 import prisma from "@calcom/prisma";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Disable body parsing for webhooks
+  if (req.method === "POST") {
+    req.body = await getRawBody(req);
+  }
+
   try {
     if (req.method !== "POST") {
       throw new HttpCode({ statusCode: 405, message: "Method Not Allowed" });
     }
 
-    const bodyRaw = await getRawBody(req);
+    const bodyRaw = req.body as Buffer;
     const headers = req.headers;
     const bodyAsString = bodyRaw.toString();
 

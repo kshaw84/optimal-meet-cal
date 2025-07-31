@@ -42,30 +42,42 @@ export function RoutingFormResponsesTable() {
     data: headers,
     isLoading: isHeadersLoading,
     isSuccess: isHeadersSuccess,
-  } = trpc.viewer.insights.routingFormResponsesHeaders.useQuery({
-    userId,
-    teamId,
-    isAll,
-    routingFormId,
-  });
+  } = trpc.viewer.insights.routingFormResponsesHeaders.useQuery(
+    {
+      userId,
+      teamId,
+      isAll,
+      routingFormId,
+    },
+    {
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+      cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    }
+  );
 
   const getInsightsFacetedUniqueValues = useInsightsFacetedUniqueValues({ headers, userId, teamId, isAll });
 
   const { sorting, limit, offset, ctaContainerRef, updateFilter } = useDataTable();
 
-  const { data, isPending } = trpc.viewer.insights.routingFormResponses.useQuery({
-    teamId,
-    startDate,
-    endDate,
-    userId,
-    memberUserIds,
-    isAll,
-    routingFormId,
-    columnFilters,
-    sorting,
-    limit,
-    offset,
-  });
+  const { data, isPending } = trpc.viewer.insights.routingFormResponses.useQuery(
+    {
+      teamId,
+      startDate,
+      endDate,
+      userId,
+      memberUserIds,
+      isAll,
+      routingFormId,
+      columnFilters,
+      sorting,
+      limit,
+      offset,
+    },
+    {
+      staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+      cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    }
+  );
 
   const processedData = useMemo(() => {
     if (!isHeadersSuccess || !data) return [];

@@ -56,30 +56,32 @@ export function ScheduleListItem({
                 </Badge>
               )}
             </div>
-            <p className="text-subtle mt-1">
-              {schedule.availability
-                .filter((availability) => !!availability.days.length)
-                .map((availability) =>
-                  availabilityAsString(availability, {
-                    locale: i18n.language,
-                    hour12: displayOptions?.hour12,
-                  })
-                )
-                // sort the availability strings as per user's weekstart (settings)
-                .sort(sortAvailabilityStrings(i18n.language, displayOptions?.weekStart))
-                .map((availabilityString, index) => (
-                  <Fragment key={index}>
-                    {availabilityString}
-                    <br />
-                  </Fragment>
-                ))}
+            <div className="text-subtle mt-1">
+              <p>
+                {schedule.availability
+                  .filter((availability) => !!availability.days.length)
+                  .map((availability) =>
+                    availabilityAsString(availability, {
+                      locale: i18n.language,
+                      hour12: displayOptions?.hour12,
+                    })
+                  )
+                  // sort the availability strings as per user's weekstart (settings)
+                  .sort(sortAvailabilityStrings(i18n.language, displayOptions?.weekStart))
+                  .map((availabilityString, index) => (
+                    <Fragment key={index}>
+                      {availabilityString}
+                      <br />
+                    </Fragment>
+                  ))}
+              </p>
               {(schedule.timeZone || displayOptions?.timeZone) && (
-                <p className="my-1 flex items-center first-letter:text-xs">
+                <div className="my-1 flex items-center first-letter:text-xs">
                   <Icon name="globe" className="h-3.5 w-3.5" />
                   &nbsp;{schedule.timeZone ?? displayOptions?.timeZone}
-                </p>
+                </div>
               )}
-            </p>
+            </div>
           </Link>
         </div>
         <Dropdown>
@@ -94,7 +96,7 @@ export function ScheduleListItem({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             {!schedule.isDefault && (
-              <DropdownMenuItem className="min-w-40 focus:ring-muted">
+              <DropdownMenuItem className="focus:ring-muted min-w-40">
                 <DropdownItem
                   type="button"
                   StartIcon="star"
@@ -121,7 +123,7 @@ export function ScheduleListItem({
                 {t("duplicate")}
               </DropdownItem>
             </DropdownMenuItem>
-            <DropdownMenuItem className="min-w-40 focus:ring-muted">
+            <DropdownMenuItem className="focus:ring-muted min-w-40">
               <DropdownItem
                 type="button"
                 color="destructive"

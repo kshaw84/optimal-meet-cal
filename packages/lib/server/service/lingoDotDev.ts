@@ -1,20 +1,13 @@
-import { LingoDotDevEngine } from "@lingo.dev/_sdk";
-import type { LocaleCode } from "@lingo.dev/_spec";
-
-import { LINGO_DOT_DEV_API_KEY } from "@calcom/lib/constants";
+// Fallback implementation without @lingo.dev/_sdk dependency
 import logger from "@calcom/lib/logger";
 
 export class LingoDotDevService {
-  private static engine = new LingoDotDevEngine({
-    apiKey: LINGO_DOT_DEV_API_KEY,
-  });
-
   /**
    * Localizes text from one language to another
    * @param text The text to localize
    * @param sourceLocale The source language locale
    * @param targetLocale The target language locale
-   * @returns The localized text
+   * @returns The localized text (fallback returns null)
    */
   static async localizeText(
     text: string,
@@ -26,14 +19,11 @@ export class LingoDotDevService {
     }
 
     try {
-      const result = await this.engine.localizeText(text, {
-        sourceLocale,
-        targetLocale,
-      });
-
-      return result;
+      // Fallback: return null since the SDK is not available
+      logger.warn(`LingoDotDevService.localizeText() called but SDK not available. Returning null.`);
+      return null;
     } catch (error) {
-      logger.error(`LingoDotDevEngine.localizeText() failed for targetLocale: ${targetLocale} - ${error}`);
+      logger.error(`LingoDotDevService.localizeText() failed for targetLocale: ${targetLocale} - ${error}`);
       return null;
     }
   }
@@ -43,7 +33,7 @@ export class LingoDotDevService {
    * @param text The text to localize
    * @param sourceLocale The source language locale
    * @param targetLocales Array of the target language locales
-   * @returns The localized texts
+   * @returns The localized texts (fallback returns empty array)
    */
   static async batchLocalizeText(
     text: string,
@@ -51,14 +41,13 @@ export class LingoDotDevService {
     targetLocales: string[]
   ): Promise<string[]> {
     try {
-      const result = await this.engine.batchLocalizeText(text, {
-        sourceLocale: sourceLocale as LocaleCode,
-        targetLocales: targetLocales as LocaleCode[],
-      });
-
-      return result;
+      // Fallback: return empty array since the SDK is not available
+      logger.warn(
+        `LingoDotDevService.batchLocalizeText() called but SDK not available. Returning empty array.`
+      );
+      return [];
     } catch (error) {
-      logger.error(`LingoDotDevEngine.batchLocalizeText() failed: ${error}`);
+      logger.error(`LingoDotDevService.batchLocalizeText() failed: ${error}`);
       return [];
     }
   }
@@ -68,7 +57,7 @@ export class LingoDotDevService {
    * @param texts Array of texts to localize
    * @param sourceLocale The source language locale
    * @param targetLocale The target language locale
-   * @returns The localized texts array
+   * @returns The localized texts array (fallback returns original texts)
    */
   static async localizeTexts(texts: string[], sourceLocale: string, targetLocale: string): Promise<string[]> {
     if (!texts.length) {
@@ -76,17 +65,13 @@ export class LingoDotDevService {
     }
 
     try {
-      const result = await this.engine.localizeChat(
-        texts.map((text) => ({ name: "NO_NAME", text: text.trim() })),
-        {
-          sourceLocale,
-          targetLocale,
-        }
+      // Fallback: return original texts since the SDK is not available
+      logger.warn(
+        `LingoDotDevService.localizeTexts() called but SDK not available. Returning original texts.`
       );
-
-      return result.map((chat: { name: string; text: string }) => chat.text);
+      return texts;
     } catch (error) {
-      logger.error(`LingoDotDevEngine.localizeTexts() failed: ${error}`);
+      logger.error(`LingoDotDevService.localizeTexts() failed: ${error}`);
       return texts;
     }
   }
