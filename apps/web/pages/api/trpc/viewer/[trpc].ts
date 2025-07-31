@@ -1,4 +1,4 @@
 import { createNextApiHandler } from "@calcom/trpc/server/createNextApiHandler";
-import { loggedInViewerRouter } from "@calcom/trpc/server/routers/loggedInViewer/_router";
+import { viewerRouter } from "@calcom/trpc/server/routers/viewer/_router";
 
-export default createNextApiHandler(loggedInViewerRouter);
+export default createNextApiHandler(viewerRouter);

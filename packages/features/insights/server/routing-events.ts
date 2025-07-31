@@ -326,7 +326,7 @@ class RoutingEventsInsights {
       });
 
       // Optimize: Use a single query with better includes
-      const responses = await prisma.app_RoutingForms_Response.findMany({
+      const responses = await prisma.app_RoutingForms_FormResponse.findMany({
         where: whereClause,
         take: limit,
         skip: offset,
@@ -354,7 +354,7 @@ class RoutingEventsInsights {
         },
       });
 
-      const total = await prisma.app_RoutingForms_Response.count({
+      const total = await prisma.app_RoutingForms_FormResponse.count({
         where: whereClause,
       });
 

@@ -18,5 +18,6 @@ export const Provider = TooltipPrimitives.Provider;
 export const Content = TooltipPrimitives.Content;
 export const Arrow = TooltipPrimitives.Arrow;
 export const Root = TooltipPrimitives.Root;
-export const createTooltipScope = TooltipPrimitives.createTooltipScope;
+export const createTooltipScope: typeof TooltipPrimitives.createTooltipScope =
+  TooltipPrimitives.createTooltipScope;
 export const TooltipPortal = PortalAsFragment;

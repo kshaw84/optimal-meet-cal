@@ -20,6 +20,20 @@ const log = logger.getSubLogger({ prefix: ["[formsHandler]"] });
 export const formsHandler = async ({ ctx, input }: FormsHandlerOptions) => {
   const { prisma, user } = ctx;
 
+  async function buildFormsWithReadOnlyStatus(forms: any[]) {
+    return forms.map((form) => {
+      const readOnly = !!form.team?.members?.find(
+        (member) => member.userId === user.id && member.role === "MEMBER"
+      );
+
+      return {
+        form,
+        readOnly,
+        hasError: false,
+      };
+    });
+  }
+
   try {
     const where = getPrismaWhereFromFilters(user, input?.filters);
     log.debug("Getting forms where", JSON.stringify(where));
@@ -63,23 +77,9 @@ export const formsHandler = async ({ ctx, input }: FormsHandlerOptions) => {
     });
 
     return {
-      filtered: await buildFormsWithReadOnlyStatus(),
+      filtered: await buildFormsWithReadOnlyStatus(forms),
       totalCount: totalForms,
     };
-
-    async function buildFormsWithReadOnlyStatus() {
-      return forms.map((form) => {
-        const readOnly = !!form.team?.members?.find(
-          (member) => member.userId === user.id && member.role === "MEMBER"
-        );
-
-        return {
-          form,
-          readOnly,
-          hasError: false,
-        };
-      });
-    }
   } catch (error) {
     log.error("Error fetching forms", { userId: user.id, error });
     return {
