@@ -1,5 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import { PrismaClient as PrismaClientWithoutExtension } from "@prisma/client";
+// Configure SSL settings for database connections
+import { readFileSync } from "fs";
+import { join } from "path";
 
 import { bookingIdempotencyKeyExtension } from "./extensions/booking-idempotency-key";
 import { disallowUndefinedDeleteUpdateManyExtension } from "./extensions/disallow-undefined-delete-update-many";
@@ -8,22 +11,43 @@ import { excludePendingPaymentsExtension } from "./extensions/exclude-pending-pa
 import { usageTrackingExtention } from "./extensions/usage-tracking";
 import { bookingReferenceMiddleware } from "./middleware";
 
-// Configure SSL settings for database connections
 const datasourceUrl = process.env.DATABASE_URL;
 const prismaOptions: Prisma.PrismaClientOptions = {};
 
 // Add SSL configuration for Supabase
-if (datasourceUrl && process.env.PGSSLMODE === "no-verify") {
-  // For Supabase with PGSSLMODE=no-verify, modify the connection URL
-  // to include sslmode=require which tells PostgreSQL to use SSL but not verify certificates
-  const url = new URL(datasourceUrl);
-  url.searchParams.set("sslmode", "require");
+if (datasourceUrl) {
+  try {
+    // Try to use Supabase SSL certificate file
+    const certPath = join(process.cwd(), "certificates", "prod-ca-2021.crt");
+    readFileSync(certPath, "utf8"); // Verify file exists
 
-  prismaOptions.datasources = {
-    db: {
-      url: url.toString(),
-    },
-  };
+    // Configure URL with proper SSL settings
+    const url = new URL(datasourceUrl);
+    url.searchParams.set("sslmode", "require");
+    url.searchParams.set("sslcert", "");
+    url.searchParams.set("sslkey", "");
+    url.searchParams.set("sslrootcert", certPath);
+
+    prismaOptions.datasources = {
+      db: {
+        url: url.toString(),
+      },
+    };
+    console.log("🔒 Prisma using Supabase SSL certificate for secure database connection");
+  } catch (error) {
+    // If certificate file not found, fall back to no-verify mode
+    if (process.env.PGSSLMODE === "no-verify") {
+      const url = new URL(datasourceUrl);
+      url.searchParams.set("sslmode", "require");
+
+      prismaOptions.datasources = {
+        db: {
+          url: url.toString(),
+        },
+      };
+      console.log("⚠️ Prisma using SSL with certificate verification disabled");
+    }
+  }
 }
 
 const globalForPrisma = global as unknown as {
