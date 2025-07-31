@@ -144,7 +144,7 @@ const EnableTwoFactorModal = ({ onEnable, onCancel }: EnableTwoFactorModalProps)
 
   return (
     <Dialog open={true}>
-      <DialogContent>
+      <DialogContent title={t("enable_2fa")}>
         <TwoFactorModalHeader title={t("enable_2fa")} description={setupDescriptions[step]} />
 
         <WithStep step={SetupStep.ConfirmPassword} current={step}>
