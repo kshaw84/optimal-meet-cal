@@ -12,33 +12,35 @@ const connectionString = process.env.DATABASE_URL ?? "postgresql://postgres:@loc
 // Configure SSL settings based on environment
 let sslConfig: any = false;
 
-try {
-  // Try to use Supabase SSL certificate file
-  const certPath = join(process.cwd(), "certificates", "prod-ca-2021.crt");
-  const cert = readFileSync(certPath, "utf8");
-
+if (process.env.SUPABASE_SSL_CERT) {
+  // Use certificate from environment variable (preferred for Vercel)
   sslConfig = {
     rejectUnauthorized: true,
-    ca: cert,
+    ca: process.env.SUPABASE_SSL_CERT,
   };
-  console.log("🔒 Using Supabase SSL certificate for secure database connection");
-} catch (error) {
-  // If certificate file not found, fall back to previous logic
-  if (process.env.SUPABASE_SSL_CERT) {
-    // Use certificate from environment variable
+  console.log("🔒 Using Supabase SSL certificate from environment variable");
+} else {
+  try {
+    // Try to use Supabase SSL certificate file as fallback
+    const certPath = join(process.cwd(), "certificates", "prod-ca-2021.crt");
+    const cert = readFileSync(certPath, "utf8");
+
     sslConfig = {
       rejectUnauthorized: true,
-      ca: process.env.SUPABASE_SSL_CERT,
+      ca: cert,
     };
-    console.log("🔒 Using Supabase SSL certificate from environment variable");
-  } else if (process.env.PGSSLMODE === "no-verify") {
-    // Fall back to no-verify mode
-    sslConfig = { rejectUnauthorized: false };
-    console.log("⚠️ Using SSL with certificate verification disabled");
-  } else if (process.env.NODE_ENV === "production") {
-    // Production with default SSL
-    sslConfig = { rejectUnauthorized: true };
-    console.log("🔒 Using production SSL with default certificate verification");
+    console.log("🔒 Using Supabase SSL certificate file for secure database connection");
+  } catch (error) {
+    // If certificate not available, fall back to previous logic
+    if (process.env.PGSSLMODE === "no-verify") {
+      // Fall back to no-verify mode
+      sslConfig = { rejectUnauthorized: false };
+      console.log("⚠️ Using SSL with certificate verification disabled");
+    } else if (process.env.NODE_ENV === "production") {
+      // Production with default SSL
+      sslConfig = { rejectUnauthorized: true };
+      console.log("🔒 Using production SSL with default certificate verification");
+    }
   }
 }
 

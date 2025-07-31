@@ -18,33 +18,35 @@ export class KyselyWriteService implements OnModuleDestroy {
     // Configure SSL settings based on environment
     let sslConfig: any = false;
 
-    try {
-      // Try to use Supabase SSL certificate file
-      const certPath = join(process.cwd(), "certificates", "prod-ca-2021.crt");
-      const cert = readFileSync(certPath, "utf8");
-
+    if (process.env.SUPABASE_SSL_CERT) {
+      // Use certificate from environment variable (preferred for Vercel)
       sslConfig = {
         rejectUnauthorized: true,
-        ca: cert,
+        ca: process.env.SUPABASE_SSL_CERT,
       };
-      this.logger.log("🔒 Using Supabase SSL certificate for secure database connection (write)");
-    } catch (error) {
-      // If certificate file not found, fall back to previous logic
-      if (process.env.SUPABASE_SSL_CERT) {
-        // Use certificate from environment variable
+      this.logger.log("🔒 Using Supabase SSL certificate from environment variable (write)");
+    } else {
+      try {
+        // Try to use Supabase SSL certificate file as fallback
+        const certPath = join(process.cwd(), "certificates", "prod-ca-2021.crt");
+        const cert = readFileSync(certPath, "utf8");
+
         sslConfig = {
           rejectUnauthorized: true,
-          ca: process.env.SUPABASE_SSL_CERT,
+          ca: cert,
         };
-        this.logger.log("🔒 Using Supabase SSL certificate from environment variable (write)");
-      } else if (process.env.PGSSLMODE === "no-verify") {
-        // Fall back to no-verify mode
-        sslConfig = { rejectUnauthorized: false };
-        this.logger.warn("⚠️ Using SSL with certificate verification disabled (write)");
-      } else if (process.env.NODE_ENV === "production") {
-        // Production with default SSL
-        sslConfig = { rejectUnauthorized: true };
-        this.logger.log("🔒 Using production SSL with default certificate verification (write)");
+        this.logger.log("🔒 Using Supabase SSL certificate file for secure database connection (write)");
+      } catch (error) {
+        // If certificate not available, fall back to previous logic
+        if (process.env.PGSSLMODE === "no-verify") {
+          // Fall back to no-verify mode
+          sslConfig = { rejectUnauthorized: false };
+          this.logger.warn("⚠️ Using SSL with certificate verification disabled (write)");
+        } else if (process.env.NODE_ENV === "production") {
+          // Production with default SSL
+          sslConfig = { rejectUnauthorized: true };
+          this.logger.log("🔒 Using production SSL with default certificate verification (write)");
+        }
       }
     }
 
