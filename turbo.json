@@ -40,6 +40,7 @@
         "NEXT_PUBLIC_WEBAPP_URL",
         "NEXT_PUBLIC_WEBSITE_URL",
         "PGSSLMODE",
+        "SUPABASE_SSL_CERT",
         "SENTRY_AUTH_TOKEN",
         "SENTRY_DEBUG",
         "SENTRY_MAX_SPANS",
