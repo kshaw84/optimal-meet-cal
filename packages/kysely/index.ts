@@ -8,12 +8,21 @@ export type { DB, Booking };
 const connectionString = process.env.DATABASE_URL ?? "postgresql://postgres:@localhost:5450/calendso";
 
 // Configure SSL settings based on environment
-const sslConfig =
-  process.env.PGSSLMODE === "no-verify"
-    ? { rejectUnauthorized: false }
-    : process.env.NODE_ENV === "production"
-    ? { rejectUnauthorized: true }
-    : false;
+let sslConfig: any = false;
+
+if (process.env.SUPABASE_SSL_CERT) {
+  // Use Supabase SSL certificate from environment variable
+  sslConfig = {
+    rejectUnauthorized: true,
+    ca: process.env.SUPABASE_SSL_CERT,
+  };
+} else if (process.env.PGSSLMODE === "no-verify") {
+  // Fall back to no-verify mode
+  sslConfig = { rejectUnauthorized: false };
+} else if (process.env.NODE_ENV === "production") {
+  // Production with default SSL
+  sslConfig = { rejectUnauthorized: true };
+}
 
 const pool = new Pool({
   connectionString,

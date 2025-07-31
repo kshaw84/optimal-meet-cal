@@ -82,7 +82,8 @@
         "DATABASE_WRITE_URL",
         "LOG_LEVEL",
         "NEXTAUTH_SECRET",
-        "PGSSLMODE"
+        "PGSSLMODE",
+        "SUPABASE_SSL_CERT"
       ]
     },
     "@calcom/ai#build": {

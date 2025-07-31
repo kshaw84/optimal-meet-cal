@@ -12,14 +12,12 @@ import { bookingReferenceMiddleware } from "./middleware";
 const datasourceUrl = process.env.DATABASE_URL;
 const prismaOptions: Prisma.PrismaClientOptions = {};
 
-// Add SSL configuration if PGSSLMODE is set to no-verify
-if (process.env.PGSSLMODE === "no-verify" && datasourceUrl) {
-  // Parse the URL and add SSL parameters
+// Add SSL configuration for Supabase
+if (datasourceUrl && process.env.PGSSLMODE === "no-verify") {
+  // For Supabase with PGSSLMODE=no-verify, modify the connection URL
+  // to include sslmode=require which tells PostgreSQL to use SSL but not verify certificates
   const url = new URL(datasourceUrl);
   url.searchParams.set("sslmode", "require");
-  url.searchParams.set("sslcert", "");
-  url.searchParams.set("sslkey", "");
-  url.searchParams.set("sslrootcert", "");
 
   prismaOptions.datasources = {
     db: {

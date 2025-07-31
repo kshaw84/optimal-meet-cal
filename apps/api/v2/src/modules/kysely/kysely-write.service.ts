@@ -16,12 +16,21 @@ export class KyselyWriteService implements OnModuleDestroy {
     const dbUrl = configService.get("db.writeUrl", { infer: true });
 
     // Configure SSL settings based on environment
-    const sslConfig =
-      process.env.PGSSLMODE === "no-verify"
-        ? { rejectUnauthorized: false }
-        : process.env.NODE_ENV === "production"
-        ? { rejectUnauthorized: true }
-        : false;
+    let sslConfig: any = false;
+
+    if (process.env.SUPABASE_SSL_CERT) {
+      // Use Supabase SSL certificate from environment variable
+      sslConfig = {
+        rejectUnauthorized: true,
+        ca: process.env.SUPABASE_SSL_CERT,
+      };
+    } else if (process.env.PGSSLMODE === "no-verify") {
+      // Fall back to no-verify mode
+      sslConfig = { rejectUnauthorized: false };
+    } else if (process.env.NODE_ENV === "production") {
+      // Production with default SSL
+      sslConfig = { rejectUnauthorized: true };
+    }
 
     const pool = new Pool({
       connectionString: dbUrl,
