@@ -14,7 +14,19 @@ export class KyselyWriteService implements OnModuleDestroy {
 
   constructor(readonly configService: ConfigService) {
     const dbUrl = configService.get("db.writeUrl", { infer: true });
-    const pool = new Pool({ connectionString: dbUrl });
+
+    // Configure SSL settings based on environment
+    const sslConfig =
+      process.env.PGSSLMODE === "no-verify"
+        ? { rejectUnauthorized: false }
+        : process.env.NODE_ENV === "production"
+        ? { rejectUnauthorized: true }
+        : false;
+
+    const pool = new Pool({
+      connectionString: dbUrl,
+      ssl: sslConfig,
+    });
 
     // 3. Create the Dialect, passing the configured pool instance
     const dialect = new PostgresDialect({

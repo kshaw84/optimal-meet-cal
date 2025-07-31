@@ -16,7 +16,7 @@ interface CacheOptions {
  * for users, teams, and global application features.
  */
 export class FeaturesRepository implements IFeaturesRepository {
-  private static featuresCache: { data: any[]; expiry: number } | null = null;
+  private static featuresCache: { data: Feature[]; expiry: number } | null = null;
 
   private clearCache() {
     FeaturesRepository.featuresCache = null;
@@ -34,7 +34,6 @@ export class FeaturesRepository implements IFeaturesRepository {
 
     const features = await db.feature.findMany({
       orderBy: { slug: "asc" },
-      cacheStrategy: { swr: 300, ttl: 300 },
     });
 
     FeaturesRepository.featuresCache = {

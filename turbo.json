@@ -39,6 +39,7 @@
         "NEXT_PUBLIC_STRIPE_TEAM_MONTHLY_PRICE_ID",
         "NEXT_PUBLIC_WEBAPP_URL",
         "NEXT_PUBLIC_WEBSITE_URL",
+        "PGSSLMODE",
         "SENTRY_AUTH_TOKEN",
         "SENTRY_DEBUG",
         "SENTRY_MAX_SPANS",
@@ -80,7 +81,8 @@
         "DATABASE_READ_URL",
         "DATABASE_WRITE_URL",
         "LOG_LEVEL",
-        "NEXTAUTH_SECRET"
+        "NEXTAUTH_SECRET",
+        "PGSSLMODE"
       ]
     },
     "@calcom/ai#build": {
