@@ -6,6 +6,7 @@ import { Dialog } from "@calcom/features/components/controlled-dialog";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { trpc } from "@calcom/trpc/react";
 import { Badge } from "@calcom/ui/components/badge";
+import { Button } from "@calcom/ui/components/button";
 import { ConfirmationDialogContent } from "@calcom/ui/components/dialog";
 import { DropdownActions, Table } from "@calcom/ui/components/table";
 import { showToast } from "@calcom/ui/components/toast";
@@ -56,6 +57,15 @@ export function AdminOrgTable() {
   const [orgToDelete, setOrgToDelete] = useState<(typeof data)[number] | null>(null);
   return (
     <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">{t("organizations")}</h2>
+          <p className="text-sm text-gray-500">{t("manage_all_organizations")}</p>
+        </div>
+        <Button StartIcon="plus" href="/settings/organizations/new" color="primary">
+          {t("create_organization")}
+        </Button>
+      </div>
       <Table>
         <Header>
           <ColumnTitle widthClassNames="w-auto">{t("organization")}</ColumnTitle>
