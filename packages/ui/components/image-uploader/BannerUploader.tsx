@@ -130,7 +130,7 @@ export default function BannerUploader({
     if (result) {
       checkDimensions();
     }
-  }, [result]);
+  }, [result, height, width, t]);
 
   return (
     <Dialog

@@ -21,7 +21,7 @@ export default function PlainTextPlugin({ setText, plainText }: PlainTextPluginP
         }
       });
     });
-  }, [plainText]);
+  }, [plainText, editor, setText]);
 
   return null;
 }

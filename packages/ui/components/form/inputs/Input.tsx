@@ -16,13 +16,13 @@ import type { InputFieldProps } from "./types";
 
 export function InputLeading(props: JSX.IntrinsicElements["div"]) {
   return (
-    <span className="bg-muted border-default text-subtle inline-flex flex-shrink-0 items-center rounded-l-sm border px-3 ltr:border-r-0 rtl:border-l-0 sm:text-sm sm:leading-4">
+    <span className="bg-muted border-default text-subtle inline-flex flex-shrink-0 items-center rounded-l-sm border px-3 sm:text-sm sm:leading-4 ltr:border-r-0 rtl:border-l-0">
       {props.children}
     </span>
   );
 }
 
-type PasswordFieldTranslations = {
+type _PasswordFieldTranslations = {
   showPasswordText?: string;
   hidePasswordText?: string;
 };

@@ -72,7 +72,7 @@ export const Badge = function Badge(props: BadgeProps) {
     withDot,
     children,
     rounded,
-    customDot,
+    customDot: _customDot,
     ...passThroughProps
   } = props;
   const isButton = "onClick" in passThroughProps && passThroughProps.onClick !== undefined;

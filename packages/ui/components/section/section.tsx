@@ -7,7 +7,7 @@ import { Icon as IconComponent } from "../icon";
 
 const Root = ({
   children,
-  ref,
+  ref: _ref,
   className,
 }: {
   children: React.ReactNode;
@@ -126,7 +126,13 @@ const Content = ({ children, ref }: { children: React.ReactNode; ref?: React.Ref
   );
 };
 
-const SubSection = ({ children, ref }: { children: React.ReactNode; ref?: React.Ref<HTMLDivElement> }) => {
+const SubSection = ({
+  children,
+  ref: _ref,
+}: {
+  children: React.ReactNode;
+  ref?: React.Ref<HTMLDivElement>;
+}) => {
   const [animateRef] = useAutoAnimate<HTMLDivElement>();
 
   return (

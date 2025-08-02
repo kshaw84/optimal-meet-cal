@@ -6,7 +6,7 @@
     "clean": "rm -rf .turbo && rm -rf node_modules",
     "build": "SKIP_DB_MIGRATIONS=1 ts-node --transpile-only ./auto-migrations.ts",
     "db-deploy": "yarn prisma migrate deploy",
-    "db-migrate": "yarn prisma migrate dev",
+    "db-migrate": "yarn prisma migrate deploy",
     "db-nuke": "docker compose down --volumes --remove-orphans || docker-compose down --volumes --remove-orphans",
     "db-reset": "run-s db-nuke db-setup",
     "db-seed": "yarn prisma db seed",

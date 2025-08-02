@@ -95,7 +95,7 @@ export function WizardForm({
             : currentStepData.content}
         </div>
         {!disableNavigation && !currentStepData.customActions && (
-          <div className="flex justify-end px-4 py-4 print:hidden sm:px-6">
+          <div className="flex justify-end px-4 py-4 sm:px-6 print:hidden">
             {!isFirstStep && (
               <Button color="secondary" onClick={prevStep}>
                 {prevLabel}

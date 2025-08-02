@@ -13,7 +13,7 @@ type IToast = {
 export const SuccessToast = ({ message, onClose, toastId }: IToast) => (
   <button
     className={classNames(
-      "data-testid-toast-success bg-default dark:bg-inverted text-emphasis dark:text-inverted shadow-elevation-low border-subtle mb-2 flex h-auto items-center justify-between space-x-2 rounded-lg border px-3 py-2.5 text-sm font-semibold rtl:space-x-reverse md:max-w-sm"
+      "data-testid-toast-success bg-default dark:bg-inverted text-emphasis dark:text-inverted shadow-elevation-low border-subtle mb-2 flex h-auto items-center justify-between space-x-2 rounded-lg border px-3 py-2.5 text-sm font-semibold md:max-w-sm rtl:space-x-reverse"
     )}
     onClick={() => onClose(toastId)}>
     <span className="mt-1">
@@ -33,7 +33,7 @@ export const SuccessToast = ({ message, onClose, toastId }: IToast) => (
 export const ErrorToast = ({ message, onClose, toastId }: IToast) => (
   <button
     className={classNames(
-      "animate-fade-in-up bg-semantic-error-subtle text-semantic-error shadow-elevation-low border-semantic-error-subtle mb-2 flex h-auto items-center justify-between space-x-2 rounded-md border px-3 py-2.5 text-sm font-semibold rtl:space-x-reverse md:max-w-sm"
+      "animate-fade-in-up bg-semantic-error-subtle text-semantic-error shadow-elevation-low border-semantic-error-subtle mb-2 flex h-auto items-center justify-between space-x-2 rounded-md border px-3 py-2.5 text-sm font-semibold md:max-w-sm rtl:space-x-reverse"
     )}
     onClick={() => onClose(toastId)}>
     <span className="mt-1">
@@ -53,7 +53,7 @@ export const ErrorToast = ({ message, onClose, toastId }: IToast) => (
 export const WarningToast = ({ message, onClose, toastId }: IToast) => (
   <button
     className={classNames(
-      "animate-fade-in-up bg-semantic-attention-subtle text-semantic-attention shadow-elevation-low border-semantic-attention-subtle mb-2 flex h-auto items-center justify-between space-x-2 rounded-md border px-3 py-2.5 text-sm font-semibold rtl:space-x-reverse md:max-w-sm"
+      "animate-fade-in-up bg-semantic-attention-subtle text-semantic-attention shadow-elevation-low border-semantic-attention-subtle mb-2 flex h-auto items-center justify-between space-x-2 rounded-md border px-3 py-2.5 text-sm font-semibold md:max-w-sm rtl:space-x-reverse"
     )}
     onClick={() => onClose(toastId)}>
     <span className="mt-1">
