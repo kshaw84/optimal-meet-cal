@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@calcom/lib": "*",
-    "@prisma/client": "^5.4.2",
+    "@prisma/client": "5.11.0",
     "@prisma/generator-helper": "^5.4.2",
     "prisma": "^5.4.2",
     "prisma-kysely": "^1.7.1",

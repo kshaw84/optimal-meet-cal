@@ -122,3 +122,9 @@ const webhookHeadersSchema = z
     "svix-signature": z.string(),
   })
   .passthrough();
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};

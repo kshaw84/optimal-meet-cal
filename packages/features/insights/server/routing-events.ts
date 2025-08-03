@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 // eslint-disable-next-line no-restricted-imports
 import mapKeys from "lodash/mapKeys";
 // eslint-disable-next-line no-restricted-imports
@@ -18,6 +17,7 @@ import type {
 } from "@calcom/features/insights/server/raw-data.schema";
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import { readonlyPrisma as prisma } from "@calcom/prisma";
+import { Prisma } from "@calcom/prisma/client";
 
 import { type ResponseValue, ZResponse } from "../lib/types";
 
@@ -330,7 +330,7 @@ class RoutingEventsInsights {
         where: whereClause,
         take: limit,
         skip: offset,
-        orderBy: makeOrderBy(sorting),
+        orderBy: sorting ? makeOrderBy(sorting) : undefined,
         include: {
           form: {
             select: {
@@ -342,6 +342,21 @@ class RoutingEventsInsights {
             select: {
               id: true,
               uid: true,
+              status: true,
+              startTime: true,
+              endTime: true,
+              createdAt: true,
+              assignmentReason: {
+                select: {
+                  reason: true,
+                },
+              },
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
               attendees: {
                 select: {
                   name: true,
@@ -461,15 +476,15 @@ class RoutingEventsInsights {
         "Submitted At": item.createdAt.toISOString(),
         "Has Booking": item.bookingUid !== null,
         "Booking Status": item.bookingStatus || "NO_BOOKING",
-        "Booking Created At": item.bookingCreatedAt?.toISOString() || "",
-        "Booking Start Time": item.bookingStartTime?.toISOString() || "",
-        "Booking End Time": item.bookingEndTime?.toISOString() || "",
+        "Booking Created At": item.booking?.createdAt?.toISOString() || "",
+        "Booking Start Time": item.booking?.startTime?.toISOString() || "",
+        "Booking End Time": item.booking?.endTime?.toISOString() || "",
         "Attendee Name": (bookingAttendees as any)?.[0]?.name,
         "Attendee Email": (bookingAttendees as any)?.[0]?.email,
         "Attendee Timezone": (bookingAttendees as any)?.[0]?.timeZone,
-        "Assignment Reason": item.bookingAssignmentReason || "",
-        "Routed To Name": item.bookingUserName || "",
-        "Routed To Email": item.bookingUserEmail || "",
+        "Assignment Reason": item.booking?.assignmentReason?.[0]?.reason || "",
+        "Routed To Name": item.booking?.user?.name || "",
+        "Routed To Email": item.booking?.user?.email || "",
         ...mapKeys(fields, (_, key) => startCase(key)),
         utm_source: item.utm_source || "",
         utm_medium: item.utm_medium || "",

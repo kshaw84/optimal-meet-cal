@@ -1,8 +1,6 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { createInstance } from "i18next";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { initReactI18next } from "react-i18next";
 
 import { useAppContextWithSchema } from "@calcom/app-store/EventTypeAppContext";
 import { useIsPlatform } from "@calcom/atoms/hooks/useIsPlatform";
@@ -15,9 +13,6 @@ import { Section } from "@calcom/ui/components/section";
 
 import type { CredentialOwner } from "../types";
 import OmniInstallAppButton from "./OmniInstallAppButton";
-
-// Global i18next instance to prevent multiple initializations
-let globalI18nInstance: any = null;
 
 export default function AppCard({
   app,
@@ -47,31 +42,6 @@ export default function AppCard({
   hideSettingsIcon?: boolean;
   hideAppCardOptions?: boolean;
 }) {
-  // Ensure i18next is initialized before using useTranslation
-  if (typeof window !== "undefined" && !globalI18nInstance) {
-    try {
-      globalI18nInstance = createInstance();
-      globalI18nInstance.use(initReactI18next);
-      globalI18nInstance.init({
-        lng: "en",
-        fallbackLng: "en",
-        resources: {
-          en: {
-            common: {},
-          },
-        },
-        react: {
-          useSuspense: false,
-        },
-        interpolation: {
-          escapeValue: false,
-        },
-      });
-    } catch (error) {
-      console.warn("Failed to initialize i18next:", error);
-    }
-  }
-
   const { t } = useTranslation();
   const [animationRef] = useAutoAnimate<HTMLDivElement>();
   const { setAppData, LockedIcon, disabled: managedDisabled } = useAppContextWithSchema();

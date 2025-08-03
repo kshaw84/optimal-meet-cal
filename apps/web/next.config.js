@@ -184,6 +184,9 @@ const nextConfig = {
   experimental: {
     // externalize server-side node_modules with size > 1mb, to improve dev mode performance/RAM usage
     optimizePackageImports: ["@calcom/ui"],
+    // Memory optimization for large builds
+    workerThreads: false,
+    cpus: 1,
   },
   productionBrowserSourceMaps: true,
   /* We already do type check on GH actions */
@@ -220,6 +223,31 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config, { webpack, buildId, isServer }) => {
+    // Memory optimization for large builds
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        ...config.optimization.splitChunks,
+        chunks: "all",
+        cacheGroups: {
+          ...config.optimization.splitChunks.cacheGroups,
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: "vendors",
+            chunks: "all",
+            priority: 10,
+          },
+          common: {
+            name: "common",
+            minChunks: 2,
+            chunks: "all",
+            priority: 5,
+            reuseExistingChunk: true,
+          },
+        },
+      },
+    };
+
     if (isServer) {
       // Module not found fix @see https://github.com/boxyhq/jackson/issues/1535#issuecomment-1704381612
       config.plugins.push(

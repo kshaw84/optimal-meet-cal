@@ -1,59 +1,87 @@
 SELECT
-  b.id,
-  b."startTime",
-  b."endTime",
-  b.status,
-  b."userId",
-  b."eventTypeId",
-  b.id AS "bookingId",
-  u.email AS "userEmail",
-  et.title AS "eventTypeName",
+  "Booking".id,
+  "Booking".uid,
+  "Booking"."eventTypeId",
+  "Booking".title,
+  "Booking".description,
+  "Booking"."startTime",
+  "Booking"."endTime",
+  "Booking"."createdAt",
+  "Booking".location,
+  "Booking".paid,
+  "Booking".status,
+  "Booking".rescheduled,
+  "Booking"."userId",
   et."teamId",
-  (
-    EXTRACT(
-      epoch
-      FROM
-        (b."endTime" - b."startTime")
-    ) / (60) :: numeric
-  ) AS length,
-  b.title AS "bookingTitle",
-  b.description AS "bookingDescription",
-  b.location AS "bookingLocation",
-  b.paid AS "isPaid",
-  b.rescheduled AS "isRescheduled",
-  b."isRecorded",
-  b.rating AS "bookingRating",
-  b."ratingFeedback" AS "bookingRatingFeedback",
-  b."cancellationReason",
-  b."rejectionReason",
-  b."fromReschedule",
-  b."dynamicEventSlugRef",
-  b."dynamicGroupSlugRef",
-  b."recurringEventId",
-  b."customInputs",
-  b."smsReminderNumber",
-  b."destinationCalendarId",
-  b.metadata,
-  b.responses,
-  b."iCalSequence",
-  b."iCalUID",
-  b."userPrimaryEmail",
-  b."idempotencyKey",
-  b."noShowHost",
-  b."cancelledBy",
-  b."rescheduledBy",
-  b."oneTimePassword",
-  b."reassignReason",
-  b."reassignById",
-  b."creationSource",
-  b.uid AS "bookingUid",
-  b."createdAt",
-  b."updatedAt"
+  et.length AS "eventLength",
+  CASE
+    WHEN ("Booking".rescheduled IS TRUE) THEN 'rescheduled' :: text
+    WHEN (
+      ("Booking".status = 'cancelled' :: "BookingStatus")
+      AND ("Booking".rescheduled IS NULL)
+    ) THEN 'cancelled' :: text
+    WHEN ("Booking"."endTime" < NOW()) THEN 'completed' :: text
+    WHEN ("Booking"."endTime" > NOW()) THEN 'uncompleted' :: text
+    ELSE NULL :: text
+  END AS "timeStatus",
+  et."parentId" AS "eventParentId",
+  u.email AS "userEmail",
+  u.username,
+  "Booking"."ratingFeedback",
+  "Booking".rating,
+  "Booking"."noShowHost",
+  false AS "isTeamBooking"
 FROM
   (
     (
-      "Booking" b
-      LEFT JOIN users u ON ((b."userId" = u.id))
+      "Booking"
+      LEFT JOIN "EventType" et ON (("Booking"."eventTypeId" = et.id))
     )
-    LEFT JOIN "EventType" et ON ((b."eventTypeId" = et.id))
-  );
+    LEFT JOIN users u ON ((u.id = "Booking"."userId"))
+  )
+WHERE
+  (et."teamId" IS NULL)
+UNION
+SELECT
+  "Booking".id,
+  "Booking".uid,
+  "Booking"."eventTypeId",
+  "Booking".title,
+  "Booking".description,
+  "Booking"."startTime",
+  "Booking"."endTime",
+  "Booking"."createdAt",
+  "Booking".location,
+  "Booking".paid,
+  "Booking".status,
+  "Booking".rescheduled,
+  "Booking"."userId",
+  et."teamId",
+  et.length AS "eventLength",
+  CASE
+    WHEN ("Booking".rescheduled IS TRUE) THEN 'rescheduled' :: text
+    WHEN (
+      ("Booking".status = 'cancelled' :: "BookingStatus")
+      AND ("Booking".rescheduled IS NULL)
+    ) THEN 'cancelled' :: text
+    WHEN ("Booking"."endTime" < NOW()) THEN 'completed' :: text
+    WHEN ("Booking"."endTime" > NOW()) THEN 'uncompleted' :: text
+    ELSE NULL :: text
+  END AS "timeStatus",
+  et."parentId" AS "eventParentId",
+  u.email AS "userEmail",
+  u.username,
+  "Booking"."ratingFeedback",
+  "Booking".rating,
+  "Booking"."noShowHost",
+  TRUE AS "isTeamBooking"
+FROM
+  (
+    (
+      "Booking"
+      LEFT JOIN "EventType" et ON (("Booking"."eventTypeId" = et.id))
+    )
+    LEFT JOIN users u ON ((u.id = "Booking"."userId"))
+  )
+WHERE
+  (et."teamId" IS NOT NULL);

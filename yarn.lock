@@ -2726,7 +2726,7 @@ __metadata:
   dependencies:
     "@calcom/lib": "*"
     "@faker-js/faker": 9.2.0
-    "@prisma/client": ^5.4.2
+    "@prisma/client": 5.11.0
     "@prisma/generator-helper": ^5.4.2
     npm-run-all: ^4.1.5
     prisma: ^5.4.2
@@ -9491,6 +9491,18 @@ __metadata:
   version: 1.0.0-next.25
   resolution: "@polka/url@npm:1.0.0-next.25"
   checksum: 4ab1d7a37163139c0e7bfc9d1e3f6a2a0db91a78b9f0a21f571d6aec2cdaeaacced744d47886c117aa7579aa5694b303fe3e0bd1922bb9cb3ce6bf7c2dc09801
+  languageName: node
+  linkType: hard
+
+"@prisma/client@npm:5.11.0":
+  version: 5.11.0
+  resolution: "@prisma/client@npm:5.11.0"
+  peerDependencies:
+    prisma: "*"
+  peerDependenciesMeta:
+    prisma:
+      optional: true
+  checksum: 2d76e66fe088b3eaa64a88a50261886ae746800fe57b8e8e2ed584431b5675b1d067bce3566227242c69de9dae11fb561bc1ba04fb38ff2d1cfe9aabd7430557
   languageName: node
   linkType: hard
 
@@ -18911,6 +18923,7 @@ __metadata:
     "@opentelemetry/core": ^1.30.1
     "@opentelemetry/instrumentation-http": ^0.50.0
     "@playwright/test": ^1.45.3
+    "@prisma/client": 5.11.0
     "@snaplet/copycat": ^4.1.0
     "@testing-library/jest-dom": ^5.16.5
     "@testing-library/react": ^16.0.1

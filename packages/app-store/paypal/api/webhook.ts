@@ -197,3 +197,9 @@ export const findPaymentCredentials = async (
     };
   }
 };
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};

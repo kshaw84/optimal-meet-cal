@@ -6,8 +6,8 @@ generator client {
 generator zod {
   provider      = "zod-prisma"
   output        = "./zod"
-  imports       = "./zod-utils"
   relationModel = "default"
+  imports       = "./zod-utils"
 }
 
 generator kysely {
@@ -185,8 +185,6 @@ model EventType {
   @@index([parentId])
   @@index([restrictionScheduleId])
   @@index([slug], map: "idx_event_type_slug")
-  @@index([teamId], map: "idx_event_type_team_id")
-  @@index([userId], map: "idx_event_type_user_id")
   @@index([userId, slug], map: "idx_event_type_user_id_slug")
 }
 
@@ -215,7 +213,6 @@ model Credential {
   @@index([subscriptionId])
   @@index([invalid])
   @@index([userId, delegationCredentialId])
-  @@index([appId], map: "idx_credential_app_id")
   @@index([type], map: "idx_credential_type")
   @@index([userId], map: "idx_credential_user_id")
 }
@@ -700,12 +697,8 @@ model Booking {
   @@index([uid])
   @@index([status])
   @@index([startTime, endTime, status])
-  @@index([eventTypeId], map: "idx_booking_event_type_id")
   @@index([startTime], map: "idx_booking_start_time")
-  @@index([status], map: "idx_booking_status")
   @@index([status, startTime], map: "idx_booking_status_start_time")
-  @@index([uid], map: "idx_booking_uid")
-  @@index([userId], map: "idx_booking_user_id")
 }
 
 model Tracking {
@@ -1949,97 +1942,57 @@ view RoutingFormResponse {
 }
 
 view BookingTimeStatus {
-  id                    Int             @unique
-  startTime             DateTime?
-  endTime               DateTime?
-  status                BookingStatus?
-  userId                Int?
-  eventTypeId           Int?
-  bookingId             Int?
-  userEmail             String?
-  eventTypeName         String?
-  teamId                Int?
-  length                Decimal?        @db.Decimal
-  bookingTitle          String?
-  bookingDescription    String?
-  bookingLocation       String?
-  isPaid                Boolean?
-  isRescheduled         Boolean?
-  isRecorded            Boolean?
-  bookingRating         Int?
-  bookingRatingFeedback String?
-  cancellationReason    String?
-  rejectionReason       String?
-  fromReschedule        String?
-  dynamicEventSlugRef   String?
-  dynamicGroupSlugRef   String?
-  recurringEventId      String?
-  customInputs          Json?
-  smsReminderNumber     String?
-  destinationCalendarId Int?
-  metadata              Json?
-  responses             Json?
-  iCalSequence          Int?
-  iCalUID               String?
-  userPrimaryEmail      String?
-  idempotencyKey        String?
-  noShowHost            Boolean?
-  cancelledBy           String?
-  rescheduledBy         String?
-  oneTimePassword       String?
-  reassignReason        String?
-  reassignById          Int?
-  creationSource        CreationSource?
-  bookingUid            String?
-  createdAt             DateTime?
-  updatedAt             DateTime?
+  id             Int            @unique
+  uid            String?
+  eventTypeId    Int?
+  title          String?
+  description    String?
+  startTime      DateTime?
+  endTime        DateTime?
+  createdAt      DateTime?
+  location       String?
+  paid           Boolean?
+  status         BookingStatus?
+  rescheduled    Boolean?
+  userId         Int?
+  teamId         Int?
+  eventLength    Int?
+  timeStatus     String?
+  eventParentId  Int?
+  userEmail      String?
+  username       String?
+  ratingFeedback String?
+  rating         Int?
+  noShowHost     Boolean?
+  isTeamBooking  Boolean?
 }
 
 view BookingTimeStatusDenormalized {
-  id                    Int             @id @unique
-  startTime             DateTime
-  endTime               DateTime
-  status                BookingStatus
-  userId                Int?
-  eventTypeId           Int?
-  bookingId             Int?
-  userEmail             String?
-  eventTypeName         String?
-  teamId                Int?
-  length                Decimal?        @db.Decimal
-  bookingTitle          String?
-  bookingDescription    String?
-  bookingLocation       String?
-  isPaid                Boolean?
-  isRescheduled         Boolean?
-  isRecorded            Boolean?
-  bookingRating         Int?
-  bookingRatingFeedback String?
-  cancellationReason    String?
-  rejectionReason       String?
-  fromReschedule        String?
-  dynamicEventSlugRef   String?
-  dynamicGroupSlugRef   String?
-  recurringEventId      String?
-  customInputs          Json?
-  smsReminderNumber     String?
-  destinationCalendarId Int?
-  metadata              Json?
-  responses             Json?
-  iCalSequence          Int?
-  iCalUID               String?
-  userPrimaryEmail      String?
-  idempotencyKey        String?
-  noShowHost            Boolean?
-  cancelledBy           String?
-  rescheduledBy         String?
-  oneTimePassword       String?
-  reassignReason        String?
-  reassignById          Int?
-  creationSource        CreationSource?
-  bookingUid            String?
-  createdAt             DateTime
-  updatedAt             DateTime?
+  id             Int           @id @unique
+  uid            String?
+  eventTypeId    Int?
+  title          String?
+  description    String?
+  startTime      DateTime
+  endTime        DateTime
+  createdAt      DateTime
+  updatedAt      DateTime?
+  location       String?
+  paid           Boolean?
+  status         BookingStatus
+  rescheduled    Boolean?
+  userId         Int?
+  teamId         Int?
+  eventLength    Int?
+  eventParentId  Int?
+  userEmail      String?
+  userName       String?
+  userUsername   String?
+  ratingFeedback String?
+  rating         Int?
+  noShowHost     Boolean?
+  isTeamBooking  Boolean?
+  timeStatus     String?
 }
 
 enum SchedulingType {
