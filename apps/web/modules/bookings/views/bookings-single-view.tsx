@@ -37,7 +37,7 @@ import { useLocale } from "@calcom/lib/hooks/useLocale";
 import { useRouterQuery } from "@calcom/lib/hooks/useRouterQuery";
 import useTheme from "@calcom/lib/hooks/useTheme";
 import isSmsCalEmail from "@calcom/lib/isSmsCalEmail";
-import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
+import { markdownToSafeHTMLClient } from "@calcom/lib/markdownToSafeHTMLClient";
 import { RefundPolicy } from "@calcom/lib/payment/types";
 import { getEveryFreqFor } from "@calcom/lib/recurringStrings";
 import { getIs24hClockFromLocalStorage, isBrowserLocale24h } from "@calcom/lib/timeFormat";
@@ -463,7 +463,7 @@ export default function Success(props: PageProps) {
                 {!isFeedbackMode && (
                   <>
                     <div
-                      className={classNames(isRoundRobin && "min-w-32 min-h-24 relative mx-auto h-24 w-32")}>
+                      className={classNames(isRoundRobin && "relative mx-auto h-24 min-h-24 w-32 min-w-32")}>
                       {isRoundRobin && bookingInfo.user && (
                         <Avatar
                           className="mx-auto flex items-center justify-center"
@@ -549,7 +549,7 @@ export default function Success(props: PageProps) {
                           </h4>
                         )}
 
-                      <div className="border-subtle text-default mt-8 grid grid-cols-3 gap-x-4 border-t pt-8 text-left rtl:text-right sm:gap-x-0">
+                      <div className="border-subtle text-default mt-8 grid grid-cols-3 gap-x-4 border-t pt-8 text-left sm:gap-x-0 rtl:text-right">
                         {(isCancelled || reschedule) && cancellationReason && (
                           <>
                             <div className="font-medium">
@@ -770,7 +770,7 @@ export default function Success(props: PageProps) {
                                 className="text-emphasis mt-4 font-medium"
                                 // eslint-disable-next-line react/no-danger
                                 dangerouslySetInnerHTML={{
-                                  __html: markdownToSafeHTML(label),
+                                  __html: markdownToSafeHTMLClient(label),
                                 }}
                               />
                               <p
@@ -1111,7 +1111,7 @@ export default function Success(props: PageProps) {
               </div>
               {isGmail && !isFeedbackMode && (
                 <Alert
-                  className="main -mb-20 mt-4 inline-block ltr:text-left rtl:text-right sm:-mt-4 sm:mb-4 sm:w-full sm:max-w-xl sm:align-middle"
+                  className="main -mb-20 mt-4 inline-block sm:-mt-4 sm:mb-4 sm:w-full sm:max-w-xl sm:align-middle ltr:text-left rtl:text-right"
                   severity="warning"
                   message={
                     <div>

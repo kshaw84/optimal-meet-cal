@@ -16,6 +16,9 @@ import { Section } from "@calcom/ui/components/section";
 import type { CredentialOwner } from "../types";
 import OmniInstallAppButton from "./OmniInstallAppButton";
 
+// Global i18next instance to prevent multiple initializations
+let globalI18nInstance: any = null;
+
 export default function AppCard({
   app,
   description,
@@ -45,21 +48,28 @@ export default function AppCard({
   hideAppCardOptions?: boolean;
 }) {
   // Ensure i18next is initialized before using useTranslation
-  if (typeof window !== "undefined" && !window.i18next) {
-    const i18n = createInstance();
-    i18n.use(initReactI18next);
-    i18n.init({
-      lng: "en",
-      fallbackLng: "en",
-      resources: {
-        en: {
-          common: {},
+  if (typeof window !== "undefined" && !globalI18nInstance) {
+    try {
+      globalI18nInstance = createInstance();
+      globalI18nInstance.use(initReactI18next);
+      globalI18nInstance.init({
+        lng: "en",
+        fallbackLng: "en",
+        resources: {
+          en: {
+            common: {},
+          },
         },
-      },
-      react: {
-        useSuspense: false,
-      },
-    });
+        react: {
+          useSuspense: false,
+        },
+        interpolation: {
+          escapeValue: false,
+        },
+      });
+    } catch (error) {
+      console.warn("Failed to initialize i18next:", error);
+    }
   }
 
   const { t } = useTranslation();

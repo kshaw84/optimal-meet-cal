@@ -86,21 +86,21 @@ export const PUBLIC_QUICK_AVAILABILITY_ROLLOUT =
 
 /** @deprecated use `WEBAPP_URL` */
 export const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || `https://${process.env.VERCEL_URL}`;
-export const LOGO = "/calcom-logo-white-word.svg";
-export const LOGO_ICON = "/cal-com-icon-white.svg";
+export const LOGO = "/optimalmeet-white-word.svg";
+export const LOGO_ICON = "/optimalmeet-icon-white.svg";
 export const AVATAR_FALLBACK = "/avatar.svg";
-export const FAVICON_16 = "/favicon-16x16.png";
-export const FAVICON_32 = "/favicon-32x32.png";
+export const FAVICON_16 = "/optimalmeet-favicon-16x16.png";
+export const FAVICON_32 = "/optimalmeet-favicon-32x32.png";
 export const APPLE_TOUCH_ICON = "/apple-touch-icon.png";
 export const MSTILE_ICON = "/mstile-150x150.png";
 export const ANDROID_CHROME_ICON_192 = "/android-chrome-192x192.png";
 export const ANDROID_CHROME_ICON_256 = "/android-chrome-256x256.png";
-export const ROADMAP = "https://cal.com/roadmap";
-export const DESKTOP_APP_LINK = "https://cal.com/download";
-export const JOIN_COMMUNITY = "https://github.com/calcom/cal.com/discussions";
-export const POWERED_BY_URL = "https://go.cal.com/booking";
-export const DOCS_URL = "https://cal.com/docs";
-export const DEVELOPER_DOCS = "https://developer.cal.com";
+// export const ROADMAP = "https://cal.com/roadmap";
+// export const DESKTOP_APP_LINK = "https://cal.com/download";
+// export const JOIN_COMMUNITY = "https://github.com/calcom/cal.com/discussions";
+// export const POWERED_BY_URL = "https://go.cal.com/booking";
+// export const DOCS_URL = "https://cal.com/docs";
+// export const DEVELOPER_DOCS = "https://developer.cal.com";
 export const SEO_IMG_DEFAULT = `${CAL_URL}/og-image.png`;
 // The Dynamic OG Image is passed through Next's Image API to further optimize it.
 // This results in a 80% smaller image 🤯. It is however important that for the query
@@ -179,10 +179,9 @@ export const ORG_SELF_SERVE_ENABLED = process.env.NEXT_PUBLIC_ORG_SELF_SERVE_ENA
 export const ORG_MINIMUM_PUBLISHED_TEAMS_SELF_SERVE = 0;
 export const ORG_MINIMUM_PUBLISHED_TEAMS_SELF_SERVE_HELPER_DIALOGUE = 2;
 
-export const CALCOM_PRIVATE_API_ROUTE = process.env.CALCOM_PRIVATE_API_ROUTE || "https://goblin.cal.com";
-export const WEBSITE_PRIVACY_POLICY_URL =
-  process.env.NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL || "https://cal.com/privacy";
-export const WEBSITE_TERMS_URL = process.env.NEXT_PUBLIC_WEBSITE_TERMS_URL || "https://cal.com/terms";
+// export const CALCOM_PRIVATE_API_ROUTE = process.env.CALCOM_PRIVATE_API_ROUTE || "https://goblin.cal.com";
+export const WEBSITE_PRIVACY_POLICY_URL = process.env.NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL || "";
+export const WEBSITE_TERMS_URL = process.env.NEXT_PUBLIC_WEBSITE_TERMS_URL || "";
 export const LINGO_DOT_DEV_API_KEY = process.env.LINGO_DOT_DEV_API_KEY;
 
 /**

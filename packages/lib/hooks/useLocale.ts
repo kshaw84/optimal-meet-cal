@@ -14,26 +14,36 @@ type useLocaleReturnType = {
   isLocaleReady: boolean;
 };
 
+// Global i18next instance to prevent multiple initializations
+let globalI18nInstance: i18n | null = null;
+
 // @internal
 const useClientLocale = (namespace: Parameters<typeof useTranslation>[0] = "common"): useLocaleReturnType => {
   const context = useAtomsContext();
 
   // Ensure i18next is initialized before using useTranslation
-  if (typeof window !== "undefined" && !window.i18next) {
-    const i18n = createInstance();
-    i18n.use(initReactI18next);
-    i18n.init({
-      lng: "en",
-      fallbackLng: "en",
-      resources: {
-        en: {
-          [namespace]: {},
+  if (typeof window !== "undefined" && !globalI18nInstance) {
+    try {
+      globalI18nInstance = createInstance();
+      globalI18nInstance.use(initReactI18next);
+      globalI18nInstance.init({
+        lng: "en",
+        fallbackLng: "en",
+        resources: {
+          en: {
+            [namespace]: {},
+          },
         },
-      },
-      react: {
-        useSuspense: false,
-      },
-    });
+        react: {
+          useSuspense: false,
+        },
+        interpolation: {
+          escapeValue: false,
+        },
+      });
+    } catch (error) {
+      console.warn("Failed to initialize i18next:", error);
+    }
   }
 
   const { i18n, t } = useTranslation(namespace);

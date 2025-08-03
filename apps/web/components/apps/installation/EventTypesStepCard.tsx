@@ -4,7 +4,7 @@ import React from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
+import { markdownToSafeHTMLClient } from "@calcom/lib/markdownToSafeHTMLClient";
 import { EventTypeMetaDataSchema } from "@calcom/prisma/zod-utils";
 import { Avatar } from "@calcom/ui/components/avatar";
 import { Badge } from "@calcom/ui/components/badge";
@@ -45,7 +45,7 @@ const EventTypeCard: FC<EventTypeCardProps> = ({
   return (
     <div
       data-testid={`select-event-type-${id}`}
-      className="hover:bg-muted min-h-20 box-border flex w-full cursor-pointer select-none items-center space-x-4 px-4 py-3"
+      className="hover:bg-muted box-border flex min-h-20 w-full cursor-pointer select-none items-center space-x-4 px-4 py-3"
       onClick={() => handleSelect()}>
       <input
         id={`${id}`}
@@ -66,7 +66,7 @@ const EventTypeCard: FC<EventTypeCardProps> = ({
               className="text-subtle line-clamp-4 break-words text-sm sm:max-w-[650px] [&>*:not(:first-child)]:hidden [&_a]:text-blue-500 [&_a]:underline [&_a]:hover:text-blue-600"
               // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{
-                __html: markdownToSafeHTML(description),
+                __html: markdownToSafeHTMLClient(description),
               }}
             />
           )}
@@ -103,7 +103,7 @@ const EventTypeGroup: FC<EventTypeGroupProps> = ({ groupIndex, userName, ...prop
         <p className="block pl-2 text-sm">{props.slug}</p>
       </div>
 
-      <div className="sm:border-subtle bg-default  border dark:bg-black sm:rounded-md">
+      <div className="sm:border-subtle bg-default  border sm:rounded-md dark:bg-black">
         <ScrollableArea className="rounded-md">
           <ul className="border-subtle max-h-97 !static w-full divide-y">
             {fields.length > 0 ? (
