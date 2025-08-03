@@ -2,6 +2,7 @@ import { createInstance } from "i18next";
 import type { TFunction, i18n } from "i18next";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
+import { initReactI18next } from "react-i18next";
 
 import { useAtomsContext } from "@calcom/atoms/hooks/useAtomsContext";
 import { AppRouterI18nContext } from "@calcom/web/app/AppRouterI18nProvider";
@@ -16,6 +17,25 @@ type useLocaleReturnType = {
 // @internal
 const useClientLocale = (namespace: Parameters<typeof useTranslation>[0] = "common"): useLocaleReturnType => {
   const context = useAtomsContext();
+
+  // Ensure i18next is initialized before using useTranslation
+  if (typeof window !== "undefined" && !window.i18next) {
+    const i18n = createInstance();
+    i18n.use(initReactI18next);
+    i18n.init({
+      lng: "en",
+      fallbackLng: "en",
+      resources: {
+        en: {
+          [namespace]: {},
+        },
+      },
+      react: {
+        useSuspense: false,
+      },
+    });
+  }
+
   const { i18n, t } = useTranslation(namespace);
   const isLocaleReady = Object.keys(i18n).length > 0;
   if (context?.clientId) {

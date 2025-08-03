@@ -1,6 +1,8 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { createInstance } from "i18next";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { initReactI18next } from "react-i18next";
 
 import { useAppContextWithSchema } from "@calcom/app-store/EventTypeAppContext";
 import { useIsPlatform } from "@calcom/atoms/hooks/useIsPlatform";
@@ -42,6 +44,24 @@ export default function AppCard({
   hideSettingsIcon?: boolean;
   hideAppCardOptions?: boolean;
 }) {
+  // Ensure i18next is initialized before using useTranslation
+  if (typeof window !== "undefined" && !window.i18next) {
+    const i18n = createInstance();
+    i18n.use(initReactI18next);
+    i18n.init({
+      lng: "en",
+      fallbackLng: "en",
+      resources: {
+        en: {
+          common: {},
+        },
+      },
+      react: {
+        useSuspense: false,
+      },
+    });
+  }
+
   const { t } = useTranslation();
   const [animationRef] = useAutoAnimate<HTMLDivElement>();
   const { setAppData, LockedIcon, disabled: managedDisabled } = useAppContextWithSchema();
