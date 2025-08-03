@@ -19,7 +19,7 @@
     },
     "@calcom/prisma#dx": {
       "cache": false,
-      "dependsOn": ["@calcom/prisma#db-migrate"]
+      "dependsOn": ["@calcom/prisma#db-up"]
     },
     "@calcom/trpc#build": {
       "outputs": ["./types"]

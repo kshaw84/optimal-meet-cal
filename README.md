@@ -268,6 +268,81 @@ for Logger level to be set at info, for example.
    yarn dev
    ```
 
+### Local Development Database Setup
+
+To ensure your local development environment matches the production database schema, follow these steps:
+
+#### Step 1: Configure Database URLs
+
+Update your `.env` file to use a single local database:
+
+```sh
+# Use the same database for both URLs to avoid schema mismatches
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cal-saml"
+DATABASE_DIRECT_URL="postgresql://postgres:postgres@localhost:5432/cal-saml"
+```
+
+#### Step 2: Create Local Database
+
+Create a local PostgreSQL database:
+
+```sh
+createdb cal-saml
+```
+
+#### Step 3: Sync with Production Schema
+
+Pull the production database schema to ensure your local database matches:
+
+```sh
+cd packages/prisma
+yarn prisma db pull --schema=./schema.prisma
+```
+
+This will introspect the production database and update your local schema to match.
+
+#### Step 4: Apply Schema to Local Database
+
+Push the schema to your local database:
+
+```sh
+yarn prisma db push --schema=./schema.prisma
+```
+
+This ensures your local database has the same structure as production.
+
+#### Step 5: Generate Prisma Client
+
+Generate the Prisma client with the updated schema:
+
+```sh
+yarn prisma generate
+```
+
+#### Step 6: Verify Setup
+
+Test that everything is working by running a build:
+
+```sh
+cd ../..
+NODE_OPTIONS="--max-old-space-size=8192" yarn build --filter=@calcom/trpc
+```
+
+#### Troubleshooting
+
+If you encounter TypeScript compilation errors related to database schema mismatches:
+
+1. **Check Database Connection**: Ensure your local database is running and accessible
+2. **Regenerate Prisma Client**: Run `yarn prisma generate` in the `packages/prisma` directory
+3. **Clear Build Cache**: Run `yarn clean` and rebuild
+4. **Memory Issues**: Use `NODE_OPTIONS="--max-old-space-size=8192"` for builds
+
+#### Database Schema Management
+
+- **For Development**: Use `yarn prisma db push` to apply schema changes
+- **For Production**: Use `yarn prisma db migrate` to create and apply migrations
+- **Schema Sync**: Use `yarn prisma db pull` to sync with production schema
+
 #### Setting up your first user
 
 ##### Approach 1

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dx": "if [ -z \"$RESEND_API_KEY\" ]; then docker compose up -d || docker-compose up -d; else echo \"Skipping mailhog - using Resend\"; fi"
+    "dx": "./dx.sh"
   },
   "dependencies": {
     "@calcom/dayjs": "*",
