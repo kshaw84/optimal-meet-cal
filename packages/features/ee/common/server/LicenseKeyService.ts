@@ -4,7 +4,7 @@ import {
   getDeploymentKey,
   getDeploymentSignatureToken,
 } from "@calcom/features/ee/deployment/lib/getDeploymentKey";
-import { CALCOM_PRIVATE_API_ROUTE } from "@calcom/lib/constants";
+// CALCOM_PRIVATE_API_ROUTE removed for self-hosted deployments
 import logger from "@calcom/lib/logger";
 import type { IDeploymentRepository } from "@calcom/lib/server/repository/deployment.interface";
 
@@ -21,14 +21,14 @@ export interface ILicenseKeyService {
 }
 
 class LicenseKeyService implements ILicenseKeyService {
-  private readonly baseUrl = CALCOM_PRIVATE_API_ROUTE;
+  private readonly baseUrl = "https://goblin.cal.com"; // Fallback for self-hosted
   private readonly licenseKey: string;
   private readonly signatureToken: string | null;
   public readonly CACHING_TIME = 86_400_000; // 24 hours in milliseconds
 
   // Private constructor to prevent direct instantiation
   private constructor(licenseKey: string, signatureToken: string | null) {
-    this.baseUrl = CALCOM_PRIVATE_API_ROUTE;
+    this.baseUrl = "https://goblin.cal.com"; // Fallback for self-hosted
     this.licenseKey = licenseKey;
     this.signatureToken = signatureToken;
   }
