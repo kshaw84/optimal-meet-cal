@@ -70,6 +70,16 @@ export default class BaseEmail {
       },
       ...(parseSubject.success && { subject: decodeHTML(parseSubject.data) }),
     };
+
+    // Log email sending attempt
+    console.log(`Attempting to send email:`, {
+      from: sanitizedFrom,
+      to: sanitizedTo,
+      subject: parseSubject.success ? decodeHTML(parseSubject.data) : "No subject",
+      transport: this.getMailerOptions().transport,
+      timestamp: new Date().toISOString(),
+    });
+
     const { createTransport } = await import("nodemailer");
     await new Promise((resolve, reject) =>
       createTransport(this.getMailerOptions().transport).sendMail(
@@ -77,9 +87,23 @@ export default class BaseEmail {
         (_err, info) => {
           if (_err) {
             const err = getErrorFromUnknown(_err);
+            console.error("Email sending failed:", {
+              error: err.message,
+              stack: err.stack,
+              from: sanitizedFrom,
+              to: sanitizedTo,
+              transport: this.getMailerOptions().transport,
+              timestamp: new Date().toISOString(),
+            });
             this.printNodeMailerError(err);
             reject(err);
           } else {
+            console.log("Email sent successfully:", {
+              messageId: info?.messageId,
+              from: sanitizedFrom,
+              to: sanitizedTo,
+              timestamp: new Date().toISOString(),
+            });
             resolve(info);
           }
         }
