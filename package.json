@@ -15,6 +15,11 @@
     "example-apps/*"
   ],
   "scripts": {
+    "optimize:local": "chmod +x scripts/implement-performance-optimizations.sh && ./scripts/implement-performance-optimizations.sh --local",
+    "optimize:production": "chmod +x scripts/implement-performance-optimizations.sh && ./scripts/implement-performance-optimizations.sh --production",
+    "optimize:monitor": "psql \"$DATABASE_URL\" -f scripts/monitor-performance.sql",
+    "optimize:maintenance": "./scripts/maintenance-cron.sh",
+    "optimize:setup": "chmod +x scripts/implement-performance-optimizations.sh && ./scripts/implement-performance-optimizations.sh --local",
     "app-store-cli": "yarn workspace @calcom/app-store-cli",
     "app-store:build": "yarn app-store-cli build",
     "app-store:watch": "yarn app-store-cli watch",
