@@ -307,7 +307,11 @@ async function handler(input: CancelBookingInput) {
       message: "Attendee successfully removed.",
     } satisfies HandleCancelBookingResponse;
 
-  const promises = webhooks.map((webhook) =>
+  // OPTIMIZATION: Run all external operations in parallel instead of sequentially
+  const externalOperations = [];
+
+  // 1. Webhook calls (previously sequential)
+  const webhookPromises = webhooks.map((webhook) =>
     sendPayload(webhook.secret, eventTrigger, new Date().toISOString(), webhook, {
       ...evt,
       ...eventTypeInfo,
@@ -321,31 +325,116 @@ async function handler(input: CancelBookingInput) {
       );
     })
   );
-  await Promise.all(promises);
+  externalOperations.push(Promise.allSettled(webhookPromises));
 
-  const workflows = await getAllWorkflowsFromEventType(bookingToDelete.eventType, bookingToDelete.userId);
-  const parsedMetadata = bookingMetadataSchema.safeParse(bookingToDelete.metadata || {});
+  // 2. Calendar integrations (previously sequential)
+  const calendarIntegrationPromise = (async () => {
+    try {
+      const bookingToDeleteEventTypeMetadataParsed = eventTypeMetaDataSchemaWithTypedApps.safeParse(
+        bookingToDelete.eventType?.metadata || null
+      );
 
-  await sendCancelledReminders({
-    workflows,
-    smsReminderNumber: bookingToDelete.smsReminderNumber,
-    evt: {
-      ...evt,
-      ...(parsedMetadata.success && parsedMetadata.data?.videoCallUrl
-        ? { metadata: { videoCallUrl: parsedMetadata.data.videoCallUrl } }
-        : {}),
-      bookerUrl,
-      ...{
-        eventType: {
-          slug: bookingToDelete.eventType?.slug as string,
-          schedulingType: bookingToDelete.eventType?.schedulingType,
-          hosts: bookingToDelete.eventType?.hosts,
+      if (!bookingToDeleteEventTypeMetadataParsed.success) {
+        log.error(
+          `Error parsing metadata`,
+          safeStringify({ error: bookingToDeleteEventTypeMetadataParsed?.error })
+        );
+        throw new Error("Error parsing metadata");
+      }
+
+      const bookingToDeleteEventTypeMetadata = bookingToDeleteEventTypeMetadataParsed.data;
+
+      const credentials = await getAllCredentialsIncludeServiceAccountKey(bookingToDelete.user, {
+        ...bookingToDelete.eventType,
+        metadata: bookingToDeleteEventTypeMetadata,
+      });
+
+      const eventManager = new EventManager(
+        { ...bookingToDelete.user, credentials },
+        bookingToDeleteEventTypeMetadata?.apps
+      );
+
+      await eventManager.cancelEvent(evt, bookingToDelete.references, isBookingInRecurringSeries);
+
+      await prisma.bookingReference.deleteMany({
+        where: {
+          bookingId: bookingToDelete.id,
         },
-      },
-    },
-    hideBranding: !!bookingToDelete.eventType?.owner?.hideBranding,
-  });
+      });
+    } catch (error) {
+      log.error(`Error deleting integrations`, safeStringify({ error }));
+    }
+  })();
+  externalOperations.push(calendarIntegrationPromise);
 
+  // 3. Email and SMS notifications (previously sequential)
+  const emailSmsPromise = (async () => {
+    try {
+      if (!platformClientId || (platformClientId && arePlatformEmailsEnabled)) {
+        await sendCancelledEmailsAndSMS(
+          evt,
+          { eventName: bookingToDelete?.eventType?.eventName },
+          bookingToDelete?.eventType?.metadata as EventTypeMetadata
+        );
+      }
+    } catch (error) {
+      log.error("Error sending emails and SMS", error);
+    }
+  })();
+  externalOperations.push(emailSmsPromise);
+
+  // 4. Workflow reminders (previously sequential)
+  const workflowPromise = (async () => {
+    try {
+      const workflows = await getAllWorkflowsFromEventType(bookingToDelete.eventType, bookingToDelete.userId);
+      const parsedMetadata = bookingMetadataSchema.safeParse(bookingToDelete.metadata || {});
+
+      await sendCancelledReminders({
+        workflows,
+        smsReminderNumber: bookingToDelete.smsReminderNumber,
+        evt: {
+          ...evt,
+          ...(parsedMetadata.success && parsedMetadata.data?.videoCallUrl
+            ? { metadata: { videoCallUrl: parsedMetadata.data.videoCallUrl } }
+            : {}),
+          bookerUrl,
+          ...{
+            eventType: {
+              slug: bookingToDelete.eventType?.slug as string,
+              schedulingType: bookingToDelete.eventType?.schedulingType,
+              hosts: bookingToDelete.eventType?.hosts,
+            },
+          },
+        },
+        hideBranding: !!bookingToDelete.eventType?.owner?.hideBranding,
+      });
+    } catch (error) {
+      log.error("Error handling workflow reminders", safeStringify({ error }));
+    }
+  })();
+  externalOperations.push(workflowPromise);
+
+  // 5. Internal note handling (previously sequential)
+  const internalNotePromise = (async () => {
+    try {
+      if (internalNote && teamId) {
+        await handleInternalNote({
+          internalNote,
+          booking: bookingToDelete,
+          userId: userId || -1,
+          teamId: teamId,
+        });
+      }
+    } catch (error) {
+      log.error("Error handlingInternalNote", safeStringify({ error }));
+    }
+  })();
+  externalOperations.push(internalNotePromise);
+
+  // OPTIMIZATION: Run all external operations in parallel
+  await Promise.allSettled(externalOperations);
+
+  // Handle recurring bookings and cleanup (these need to be sequential for data consistency)
   let updatedBookings: {
     id: number;
     uid: string;
@@ -387,23 +476,23 @@ async function handler(input: CancelBookingInput) {
       where: {
         recurringEventId: bookingToDelete.recurringEventId,
         startTime: {
-          gte: new Date(),
+          gte,
         },
       },
       select: {
         id: true,
-        startTime: true,
-        endTime: true,
+        uid: true,
+        workflowReminders: true,
         references: {
           select: {
-            uid: true,
             type: true,
-            externalCalendarId: true,
             credentialId: true,
+            uid: true,
+            externalCalendarId: true,
           },
         },
-        workflowReminders: true,
-        uid: true,
+        startTime: true,
+        endTime: true,
       },
     });
     updatedBookings = updatedBookings.concat(allUpdatedBookings);
@@ -461,48 +550,7 @@ async function handler(input: CancelBookingInput) {
     });
   }
 
-  const isBookingInRecurringSeries = !!(
-    bookingToDelete.eventType?.recurringEvent &&
-    bookingToDelete.recurringEventId &&
-    allRemainingBookings
-  );
-
-  try {
-    const bookingToDeleteEventTypeMetadataParsed = eventTypeMetaDataSchemaWithTypedApps.safeParse(
-      bookingToDelete.eventType?.metadata || null
-    );
-
-    if (!bookingToDeleteEventTypeMetadataParsed.success) {
-      log.error(
-        `Error parsing metadata`,
-        safeStringify({ error: bookingToDeleteEventTypeMetadataParsed?.error })
-      );
-      throw new Error("Error parsing metadata");
-    }
-
-    const bookingToDeleteEventTypeMetadata = bookingToDeleteEventTypeMetadataParsed.data;
-
-    const credentials = await getAllCredentialsIncludeServiceAccountKey(bookingToDelete.user, {
-      ...bookingToDelete.eventType,
-      metadata: bookingToDeleteEventTypeMetadata,
-    });
-
-    const eventManager = new EventManager(
-      { ...bookingToDelete.user, credentials },
-      bookingToDeleteEventTypeMetadata?.apps
-    );
-
-    await eventManager.cancelEvent(evt, bookingToDelete.references, isBookingInRecurringSeries);
-
-    await prisma.bookingReference.deleteMany({
-      where: {
-        bookingId: bookingToDelete.id,
-      },
-    });
-  } catch (error) {
-    log.error(`Error deleting integrations`, safeStringify({ error }));
-  }
-
+  // Cleanup operations (these can be parallel)
   try {
     const webhookTriggerPromises = [];
     const workflowReminderPromises = [];
@@ -528,30 +576,6 @@ async function handler(input: CancelBookingInput) {
     log.error("Error deleting scheduled webhooks and workflows", safeStringify({ error }));
   }
 
-  try {
-    if (internalNote && teamId) {
-      await handleInternalNote({
-        internalNote,
-        booking: bookingToDelete,
-        userId: userId || -1,
-        teamId: teamId,
-      });
-    }
-  } catch (error) {
-    log.error("Error handlingInternalNote", safeStringify({ error }));
-  }
-
-  try {
-    // TODO: if emails fail try to requeue them
-    if (!platformClientId || (platformClientId && arePlatformEmailsEnabled))
-      await sendCancelledEmailsAndSMS(
-        evt,
-        { eventName: bookingToDelete?.eventType?.eventName },
-        bookingToDelete?.eventType?.metadata as EventTypeMetadata
-      );
-  } catch (error) {
-    log.error("Error deleting event", error);
-  }
   return {
     success: true,
     message: "Booking successfully cancelled.",
