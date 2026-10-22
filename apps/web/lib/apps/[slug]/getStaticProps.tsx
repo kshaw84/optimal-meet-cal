@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getAppWithMetadata } from "@calcom/app-store/_appRegistry";
 import { getAppAssetFullPath } from "@calcom/app-store/getAppAssetFullPath";
 import { IS_PRODUCTION } from "@calcom/lib/constants";
+import { markdownToSafeHTML } from "@calcom/lib/markdownToSafeHTML";
 import prisma from "@calcom/prisma";
 
 export const sourceSchema = z.object({
@@ -80,7 +81,8 @@ export const getStaticProps = async (slug: string) => {
   }
   return {
     isAppDisabled: false as const,
-    source: { content, data },
+    // Rendered here because the DOMPurify-based client helper has no `sanitize` during SSR.
+    source: { contentAsSafeHTML: markdownToSafeHTML(content), data },
     data: appMeta,
   };
 };

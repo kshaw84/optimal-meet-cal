@@ -72,7 +72,7 @@ export const constructMeetingImage = ({ title, users = [], profile }: MeetingIma
     params.append("usernames", user.username);
   });
 
-  return encodeURIComponent(`/api/social/og/image?${params.toString()}`);
+  return `/api/social/og/image?${params.toString()}`;
 };
 
 /**
@@ -86,7 +86,7 @@ export const constructAppImage = ({ name, slug, description }: AppImageProps): s
     slug,
     description,
   });
-  return encodeURIComponent(`/api/social/og/image?${params.toString()}`);
+  return `/api/social/og/image?${params.toString()}`;
 };
 
 export const constructGenericImage = ({ title, description }: GenericImageProps) => {
@@ -95,7 +95,7 @@ export const constructGenericImage = ({ title, description }: GenericImageProps)
     title,
     description,
   });
-  return encodeURIComponent(`/api/social/og/image?${params.toString()}`);
+  return `/api/social/og/image?${params.toString()}`;
 };
 
 const Wrapper = ({ children, variant = "light", rotateBackground }: WrapperProps) => (

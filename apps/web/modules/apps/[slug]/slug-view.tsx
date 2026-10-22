@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { IS_PRODUCTION } from "@calcom/lib/constants";
 import { useLocale } from "@calcom/lib/hooks/useLocale";
-import { markdownToSafeHTMLClient } from "@calcom/lib/markdownToSafeHTMLClient";
 import { showToast } from "@calcom/ui/components/toast";
 
 import type { AppDataProps } from "@lib/apps/[slug]/getStaticProps";
@@ -67,7 +66,7 @@ function SingleAppPage(props: AppDataProps) {
       body={
         <>
           {/* eslint-disable-next-line react/no-danger */}
-          <div dangerouslySetInnerHTML={{ __html: markdownToSafeHTMLClient(source.content) }} />
+          <div dangerouslySetInnerHTML={{ __html: source.contentAsSafeHTML }} />
         </>
       }
     />
